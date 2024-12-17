@@ -1,6 +1,6 @@
-# Soundframe
+# PopeBeats2Tube
 
-Soundframe is a web application that allows users to upload, schedule, and manage audio and image files. It also integrates with Google authentication and the YouTube API to sync media content. This application is designed for personal use, with a simple and intuitive interface for handling various media management tasks.
+PopeBeats2Tube is a web application that allows users to upload, schedule, and manage audio and image files. It also integrates with Google authentication and the YouTube API to sync media content. This application is designed for personal use, with a simple and intuitive interface for handling various media management tasks.
 
 ## Features
 
@@ -114,4 +114,4 @@ This project is licensed under the MIT License. See the `LICENSE` file for detai
 
 For any questions or feedback, feel free to reach out to pavle.curcic678@gmail.com.
 
-#### Made as a birthday present.
+#### Made as a birthday present, with love.
