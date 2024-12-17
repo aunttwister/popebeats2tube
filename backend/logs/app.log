@@ -1,0 +1,90 @@
+2024-11-14 22:53:03.837 | INFO     | main:<module>:20 - Main app initialized
+2024-11-14 22:53:03.837 | INFO     | main:<module>:20 - Main app initialized
+2024-11-14 22:53:03.840 | INFO     | main:startup_event:18 - Application started.
+2024-11-14 22:53:03.840 | INFO     | main:startup_event:18 - Application started.
+2024-11-14 22:53:26.351 | INFO     | services.upload_service:upload_file:31 - Started file upload.
+2024-11-14 22:53:26.351 | INFO     | services.upload_service:upload_file:31 - Started file upload.
+2024-11-14 22:55:53.405 | INFO     | main:<module>:20 - Main app initialized
+2024-11-14 22:55:53.405 | INFO     | main:<module>:20 - Main app initialized
+2024-11-14 22:55:53.408 | INFO     | main:startup_event:18 - Application started.
+2024-11-14 22:55:53.408 | INFO     | main:startup_event:18 - Application started.
+2024-11-14 22:56:50.767 | INFO     | main:<module>:20 - Main app initialized
+2024-11-14 22:56:50.767 | INFO     | main:<module>:20 - Main app initialized
+2024-11-14 22:56:50.771 | INFO     | main:startup_event:18 - Application started.
+2024-11-14 22:56:50.771 | INFO     | main:startup_event:18 - Application started.
+2024-11-14 22:56:54.401 | INFO     | services.upload_service:upload_file:31 - Started file upload.
+2024-11-14 22:56:54.401 | INFO     | services.upload_service:upload_file:31 - Started file upload.
+2024-11-14 22:56:54.405 | INFO     | services.upload_service:upload_file:40 - Audio file uploaded successfully: C:\Users\pavle\Documents\Hobby\MyProjects\Soundframe\backend\uploads\audio\test.mp3
+2024-11-14 22:56:54.405 | INFO     | services.upload_service:upload_file:40 - Audio file uploaded successfully: C:\Users\pavle\Documents\Hobby\MyProjects\Soundframe\backend\uploads\audio\test.mp3
+2024-11-14 22:57:36.586 | INFO     | main:<module>:20 - Main app initialized
+2024-11-14 22:57:36.586 | INFO     | main:<module>:20 - Main app initialized
+2024-11-14 22:57:36.590 | INFO     | main:startup_event:18 - Application started.
+2024-11-14 22:57:36.590 | INFO     | main:startup_event:18 - Application started.
+2024-11-14 22:58:45.278 | INFO     | main:<module>:20 - Main app initialized
+2024-11-14 22:58:45.278 | INFO     | main:<module>:20 - Main app initialized
+2024-11-14 22:58:45.282 | INFO     | main:startup_event:18 - Application started.
+2024-11-14 22:58:45.282 | INFO     | main:startup_event:18 - Application started.
+2024-11-14 22:58:55.689 | INFO     | main:<module>:20 - Main app initialized
+2024-11-14 22:58:55.689 | INFO     | main:<module>:20 - Main app initialized
+2024-11-14 22:58:55.692 | INFO     | main:startup_event:18 - Application started.
+2024-11-14 22:58:55.692 | INFO     | main:startup_event:18 - Application started.
+2024-11-14 22:59:43.550 | INFO     | main:<module>:20 - Main app initialized
+2024-11-14 22:59:43.550 | INFO     | main:<module>:20 - Main app initialized
+2024-11-14 22:59:43.553 | INFO     | main:startup_event:18 - Application started.
+2024-11-14 22:59:43.553 | INFO     | main:startup_event:18 - Application started.
+2024-11-14 23:00:05.185 | INFO     | main:<module>:20 - Main app initialized
+2024-11-14 23:00:05.185 | INFO     | main:<module>:20 - Main app initialized
+2024-11-14 23:00:05.189 | INFO     | main:startup_event:18 - Application started.
+2024-11-14 23:00:05.189 | INFO     | main:startup_event:18 - Application started.
+2024-11-14 23:01:25.715 | INFO     | main:<module>:29 - Main app initialized
+2024-11-14 23:01:25.715 | INFO     | main:<module>:29 - Main app initialized
+2024-11-14 23:01:25.718 | INFO     | main:startup_event:27 - Application started.
+2024-11-14 23:01:25.718 | INFO     | main:startup_event:27 - Application started.
+2024-11-14 23:01:53.455 | INFO     | main:<module>:29 - Main app initialized
+2024-11-14 23:01:53.455 | INFO     | main:<module>:29 - Main app initialized
+2024-11-14 23:01:53.458 | INFO     | main:startup_event:27 - Application started.
+2024-11-14 23:01:53.458 | INFO     | main:startup_event:27 - Application started.
+2024-11-14 23:10:26.393 | INFO     | main:<module>:29 - Main app initialized
+2024-11-14 23:10:26.393 | INFO     | main:<module>:29 - Main app initialized
+2024-11-14 23:10:26.396 | INFO     | main:startup_event:27 - Application started.
+2024-11-14 23:10:26.396 | INFO     | main:startup_event:27 - Application started.
+2024-11-14 23:11:05.704 | INFO     | main:<module>:29 - Main app initialized
+2024-11-14 23:11:05.704 | INFO     | main:<module>:29 - Main app initialized
+2024-11-14 23:11:05.707 | INFO     | main:startup_event:27 - Application started.
+2024-11-14 23:11:05.707 | INFO     | main:startup_event:27 - Application started.
+2024-11-14 23:11:12.887 | INFO     | main:<module>:29 - Main app initialized
+2024-11-14 23:11:12.887 | INFO     | main:<module>:29 - Main app initialized
+2024-11-14 23:11:12.891 | INFO     | main:startup_event:27 - Application started.
+2024-11-14 23:11:12.891 | INFO     | main:startup_event:27 - Application started.
+2024-11-14 23:11:27.222 | INFO     | services.upload_service:upload_file:31 - Started file upload.
+2024-11-14 23:11:27.222 | INFO     | services.upload_service:upload_file:31 - Started file upload.
+2024-11-14 23:11:27.225 | INFO     | services.upload_service:upload_file:43 - Audio file uploaded successfully: C:\Users\pavle\Documents\Hobby\MyProjects\Soundframe\backend\uploads\audio\test.mp3
+2024-11-14 23:11:27.225 | INFO     | services.upload_service:upload_file:43 - Audio file uploaded successfully: C:\Users\pavle\Documents\Hobby\MyProjects\Soundframe\backend\uploads\audio\test.mp3
+2024-11-14 23:11:27.227 | INFO     | services.upload_service:upload_file:46 - Image file uploaded successfully: C:\Users\pavle\Documents\Hobby\MyProjects\Soundframe\backend\uploads\images\test.png
+2024-11-14 23:11:27.227 | INFO     | services.upload_service:upload_file:46 - Image file uploaded successfully: C:\Users\pavle\Documents\Hobby\MyProjects\Soundframe\backend\uploads\images\test.png
+2024-11-14 23:11:27.230 | INFO     | services.upload_service:upload_file:48 - Files uploaded successfully.
+2024-11-14 23:11:27.230 | INFO     | services.upload_service:upload_file:48 - Files uploaded successfully.
+2024-11-14 23:11:40.229 | INFO     | main:<module>:29 - Main app initialized
+2024-11-14 23:11:40.229 | INFO     | main:<module>:29 - Main app initialized
+2024-11-14 23:11:40.232 | INFO     | main:startup_event:27 - Application started.
+2024-11-14 23:11:40.232 | INFO     | main:startup_event:27 - Application started.
+2024-11-14 23:11:42.071 | INFO     | main:<module>:29 - Main app initialized
+2024-11-14 23:11:42.071 | INFO     | main:<module>:29 - Main app initialized
+2024-11-14 23:11:42.074 | INFO     | main:startup_event:27 - Application started.
+2024-11-14 23:11:42.074 | INFO     | main:startup_event:27 - Application started.
+2024-11-14 23:11:52.745 | INFO     | services.upload_service:upload_file:31 - Started file upload.
+2024-11-14 23:11:52.745 | INFO     | services.upload_service:upload_file:31 - Started file upload.
+2024-11-14 23:11:52.746 | ERROR    | services.upload_service:upload_file:34 - Invalid audio file type: test.png. Allowed audio types are {'mp3', 'wav', 'flac'}.
+2024-11-14 23:11:52.746 | ERROR    | services.upload_service:upload_file:34 - Invalid audio file type: test.png. Allowed audio types are {'mp3', 'wav', 'flac'}.
+2024-11-14 23:13:04.901 | INFO     | services.upload_service:upload_file:31 - Started file upload.
+2024-11-14 23:13:04.901 | INFO     | services.upload_service:upload_file:31 - Started file upload.
+2024-11-14 23:13:04.904 | ERROR    | services.upload_service:upload_file:34 - Invalid audio file type: test.png. Allowed audio types are {'mp3', 'wav', 'flac'}.
+2024-11-14 23:13:04.904 | ERROR    | services.upload_service:upload_file:34 - Invalid audio file type: test.png. Allowed audio types are {'mp3', 'wav', 'flac'}.
+2024-11-14 23:15:17.702 | INFO     | main:<module>:29 - Main app initialized
+2024-11-14 23:15:17.702 | INFO     | main:<module>:29 - Main app initialized
+2024-11-14 23:15:17.706 | INFO     | main:startup_event:27 - Application started.
+2024-11-14 23:15:17.706 | INFO     | main:startup_event:27 - Application started.
+2024-11-14 23:15:39.377 | INFO     | main:<module>:29 - Main app initialized
+2024-11-14 23:15:39.377 | INFO     | main:<module>:29 - Main app initialized
+2024-11-14 23:15:39.380 | INFO     | main:startup_event:27 - Application started.
+2024-11-14 23:15:39.380 | INFO     | main:startup_event:27 - Application started.
