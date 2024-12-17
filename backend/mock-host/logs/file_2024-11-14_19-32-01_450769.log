@@ -1,0 +1,6 @@
+2024-11-14 19:33:45.864 | ERROR    | main:is_valid_file:24 - Invalid file type: .pdf for file Pavle_Curcic_2024.pdf
+2024-11-14 19:33:45.865 | ERROR    | main:upload_file:47 - Error uploading file Pavle_Curcic_2024.pdf: 400: Invalid file type
+2024-11-14 19:33:47.587 | ERROR    | main:is_valid_file:24 - Invalid file type: .pdf for file Pavle_Curcic_2024.pdf
+2024-11-14 19:33:47.588 | ERROR    | main:upload_file:47 - Error uploading file Pavle_Curcic_2024.pdf: 400: Invalid file type
+2024-11-14 20:45:32.993 | ERROR    | main:upload_file:47 - Error uploading file test.mp3: [Errno 2] No such file or directory: 'uploads/test.mp3'
+2024-11-14 20:45:35.176 | ERROR    | main:upload_file:47 - Error uploading file test.mp3: [Errno 2] No such file or directory: 'uploads/test.mp3'
