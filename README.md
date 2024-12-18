@@ -35,43 +35,53 @@ PopeBeats2Tube is a web application that allows users to upload, schedule, and m
 ### Backend
 
 1. Clone the repository:
-   ```bash
-   git clone https://github.com/username/soundframe.git
-   cd soundframe/backend
-   ```
+
+    ```bash
+    git clone https://github.com/username/soundframe.git
+    cd soundframe/backend
+    ```
+
 2. Create a virtual environment and install dependencies:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   pip install -r requirements.txt
-   ```
+
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # On Windows: venv\Scripts\activate
+    pip install -r requirements.txt
+    ```
+
 3. Configure Google OAuth credentials and YouTube API:
    - Set up a project in Google Cloud Console.
    - Enable the OAuth 2.0 and YouTube Data API v3.
-   - Download the credentials JSON file and place it in the `backend/config` directory.
+   - Download the credentials JSON file and place it in the backend/config directory.
+
 4. Start the development server:
-   ```bash
-   uvicorn main:app --reload
-   ```
+
+    ```bash
+    uvicorn main:app --reload
+    ```
 
 ### Frontend
 
-1. Navigate to the `frontend` directory:
-   ```bash
-   cd ../frontend
-   ```
+1. Navigate to the frontend directory:
+
+    ```bash
+    cd ../frontend
+    ```
+
 2. Install dependencies:
-   ```bash
-   npm install
-   ```
+
+    ```bash
+    npm install
+    ```
+
 3. Start the development server:
-   ```bash
-   npm start
-   ```
+
+    ```bash
+    npm start
+    ```
 
 ## Project Structure
 
-```
 Soundframe/
 |
 ├── backend/
@@ -95,20 +105,39 @@ Soundframe/
 │
 ├── docs/                      # Project documentation
 └── README.md                  # Project introduction
-```
 
 ## Contributing
 
-This is a personal project, but contributions are welcome. If you'd like to contribute:
+This is a personal project, but contributions are welcome. If you'd like to contribute, please follow the steps below:
 
-1. Fork the repository.
-2. Create a feature branch.
-3. Commit your changes.
-4. Open a pull request.
+1. **Fork the repository** to your own GitHub account.
+2. **Create a new branch** for your feature or bug fix:
 
+    ```bash
+    git checkout -b your-feature-branch
+    ```
+
+3. **Make your changes** in the newly created branch.
+4. **Commit your changes**:
+
+    ```bash
+    git commit -m "Description of your changes"
+    ```
+
+5. **Push your changes** to your forked repository:
+
+    ```bash
+    git push origin your-feature-branch
+    ```
+
+6. **Open a pull request** (PR) against the `main` branch of the original repository.
+
+### Important Note:
+- **Direct commits to the `main` branch are forbidden.** All changes should be made via a feature branch, and pull requests must be reviewed before merging.
+  
 ## License
 
-This project is licensed under the MIT License. See the `LICENSE` file for details.
+This project is licensed under the MIT License. See the LICENSE file for details.
 
 ## Contact
 
@@ -116,4 +145,4 @@ For any questions or feedback, feel free to reach out to pavle.curcic678@gmail.c
 
 ## Made as a birthday present, with love.
 
-This is considered as an open source project, feel free to selfhost it!
+This is considered as an open-source project, feel free to self-host it!
