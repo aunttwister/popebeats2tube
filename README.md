@@ -105,7 +105,7 @@ PopeBeats2Tube/
 │   └── index.html             # HTML template
 │
 ├── docs/                      # Project documentation
-└── README.md                  # Project introduction
+└── README.md                  # Project intro
 ```
 
 ## Contributing
