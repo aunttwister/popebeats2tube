@@ -114,4 +114,6 @@ This project is licensed under the MIT License. See the `LICENSE` file for detai
 
 For any questions or feedback, feel free to reach out to pavle.curcic678@gmail.com.
 
-#### Made as a birthday present, with love.
+## Made as a birthday present, with love.
+
+This is considered as an open source project, feel free to selfhost it!
