@@ -82,7 +82,8 @@ PopeBeats2Tube is a web application that allows users to upload, schedule, and m
 
 ## Project Structure
 
-Soundframe/
+```
+PopeBeats2Tube/
 |
 ├── backend/
 │   ├── app/
@@ -105,6 +106,7 @@ Soundframe/
 │
 ├── docs/                      # Project documentation
 └── README.md                  # Project introduction
+```
 
 ## Contributing
 
