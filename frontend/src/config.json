@@ -1,0 +1,17 @@
+{
+    "fileUpload": {
+        "audio": {
+            "accept": {
+                "audio/*": [".mp3", ".wav", ".mpeg"]
+            },
+            "maxFileSize": 10485760
+        },
+        "image": {
+            "accept": {
+                "image/*": [".jpeg", ".png", ".gif"]
+            },
+            "maxFileSize": 5242880
+        }
+    }
+}
+  
