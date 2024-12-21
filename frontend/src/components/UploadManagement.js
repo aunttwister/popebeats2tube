@@ -3,8 +3,8 @@ import { Box, Table, TableBody, TableCell, TableHead, TableRow, Button } from '@
 
 function UploadManagement() {
   const uploads = [
-    { id: 1, title: 'Sample Upload 1', executed: true },
-    { id: 2, title: 'Sample Upload 2', executed: false },
+    { id: 1, title: 'Sample Upload 1', date: '17-04-2025', executed: true },
+    { id: 2, title: 'Sample Upload 2', date: '10-12-2024', executed: false },
   ];
 
   return (
@@ -13,6 +13,7 @@ function UploadManagement() {
         <TableHead>
           <TableRow>
             <TableCell>Title</TableCell>
+            <TableCell>Date</TableCell>
             <TableCell>Status</TableCell>
             <TableCell>Actions</TableCell>
           </TableRow>
@@ -21,6 +22,7 @@ function UploadManagement() {
           {uploads.map((upload) => (
             <TableRow key={upload.id}>
               <TableCell>{upload.title}</TableCell>
+              <TableCell>{upload.date}</TableCell>
               <TableCell>{upload.executed ? 'Archived' : 'Scheduled'}</TableCell>
               <TableCell>
                 {!upload.executed && (
