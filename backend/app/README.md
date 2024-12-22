@@ -78,7 +78,7 @@ Contains reusable utility functions, such as date validation and file handling.
 Entry point for the FastAPI application. Configures the app, initializes routes, and runs the server.
 
 ### **.gitignore**
-Ensures only the `app/` directory and `README.md` are included in the repository:
+Ensures only the `app/` directory, `README.md`, and excludes unnecessary files like `venv/` and `__pycache__/`:
 ```
 # Ignore everything
 *
@@ -89,6 +89,10 @@ Ensures only the `app/` directory and `README.md` are included in the repository
 
 # Allow README.md
 !README.md
+
+# Exclude virtual environment and cache files
+app/venv/
+app/__pycache__/
 ```
 
 ### **requirements.txt**
