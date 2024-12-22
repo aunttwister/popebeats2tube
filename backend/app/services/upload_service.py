@@ -9,7 +9,7 @@ The module validates the file type based on predefined allowed extensions and lo
 """
 from fastapi import APIRouter, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
-from config.log_config import setup_logging
+from app.config import setup_logging
 from utils.utils import save_file
 from settings.settings import AUDIO_DIR, IMAGE_DIR  # Import global paths for audio and image
 
