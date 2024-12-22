@@ -1,32 +1,24 @@
 """
-File handling utilities.
+Utility functions for handling common operations used across the application.
 
-This file contains a function to save uploaded files to the server. The function handles reading the file content and saving it to the specified directory.
+This module includes functions for date validation and other shared utilities.
 """
+from datetime import datetime
 
-from fastapi import UploadFile
-import os
-
-async def save_file(file: UploadFile, upload_dir: str) -> str:
+def is_past_date(upload_date: str) -> bool:
     """
-    Saves an uploaded file to the specified directory.
+    Check if the provided date string is in the past compared to the current date and time.
 
-    This function reads the content of the uploaded file and writes it to the specified directory on the server.
+    Args:
+        upload_date (str): The date string in ISO 8601 format (YYYY-MM-DDTHH:MM:SS).
 
-    :param file: The uploaded file object from FastAPI's UploadFile.
-    :param upload_dir: The directory where the file will be saved.
-    :return: The path where the file was saved.
+    Returns:
+        bool: True if the provided upload date is in the past, False otherwise.
+    
+    Example:
+        >>> is_past_date("2023-12-21T15:30:00")
+        True
+        >>> is_past_date("2025-01-01T00:00:00")
+        False
     """
-    # Ensure the upload directory exists
-    os.makedirs(upload_dir, exist_ok=True)
-    
-    # Create the file path where the file will be saved
-    file_path = os.path.join(upload_dir, file.filename)
-    
-    # Open the file and write its content
-    with open(file_path, "wb") as f:
-        # Read the content of the uploaded file in chunks
-        content = await file.read()
-        f.write(content)
-
-    return file_path
+    return datetime.fromisoformat(upload_date) < datetime.now()
