@@ -1,1 +1,0 @@
-2024-11-14 20:54:26.030 | ERROR    | main:upload_file:56 - Error uploading file test.mp3: [Errno 2] No such file or directory: 'uploads/test.mp3'
