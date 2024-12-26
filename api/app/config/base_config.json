@@ -1,6 +1,6 @@
 {
     "db": {
-        "conn_str": "your_database_connection_string"
+        "conn_str": "sqlite://///192.168.1.100/D$/database/sqlite/popebeats2tube.dev"
     },
     "api": {
         "port": 8000,

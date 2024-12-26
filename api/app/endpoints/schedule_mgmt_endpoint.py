@@ -8,7 +8,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from app.db import get_db_session
 from app.dto import ScheduleDto
-from app.http_response import (
+from app.utils.http_response_util import (
     response_200,
     response_201,
     response_204
