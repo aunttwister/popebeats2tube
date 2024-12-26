@@ -1,0 +1,19 @@
+{
+    "db": {
+        "conn_str": "your_database_connection_string"
+    },
+    "api": {
+        "port": 8000,
+        "base_url": "https://api.example.com",
+        "auth_token": "your_api_token",
+        "timeout": 30,
+        "max_upload_size_img": 10485760,
+        "max_upload_size_audio": 10485760
+    },
+    "file_share": {
+        "ip_addr": "",
+        "base_path": "",
+        "audio_path": "audio",
+        "img_path": "img"
+    }
+}

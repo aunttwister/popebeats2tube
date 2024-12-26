@@ -1,0 +1,8 @@
+{
+    "mock_env": {
+        "img_src_dir": "mock/images/source",
+        "audio_src_dir": "mock/audio/source",
+        "img_dest_dir": "mock/images/destination",
+        "audio_dest_dir": "mock/audio/destination"
+    }
+}

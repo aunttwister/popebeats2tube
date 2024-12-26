@@ -1,0 +1,10 @@
+{
+    "app_settings": {
+        "debug_mode": true,
+        "default_language": "en"
+    },
+    "features": {
+        "enable_advanced_logging": true,
+        "use_mock_environment": false
+    }
+}
