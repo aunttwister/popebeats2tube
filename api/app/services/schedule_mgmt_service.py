@@ -17,6 +17,7 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 from app.db import Schedule  # Using the database model for interaction
 from app.dto import ScheduleDto
+from app.services.file_transfer_service import transfer_file
 
 async def get_schedules(db: Session) -> List[ScheduleDto]:
     """
@@ -53,7 +54,7 @@ async def create_schedule(
     schedule: ScheduleDto,
     db: Session) -> ScheduleDto:
     """
-    Create a new schedule in the database.
+    Create a new schedule in the database and transfer associated files.
 
     Args:
     - schedule (ScheduleDto): The DTO containing the details of the schedule to create.
@@ -62,12 +63,17 @@ async def create_schedule(
     Returns:
     - ScheduleDto: The newly created schedule mapped to a DTO object.
     """
+    # Transfer files to the shared location
+    image_path = transfer_file(schedule.img, schedule.video_title)
+    audio_path = transfer_file(schedule.audio, schedule.video_title)
+
+    # Create a new schedule record in the database
     new_schedule = Schedule(
         upload_date=schedule.upload_date,
         executed=schedule.executed,
         video_title=schedule.video_title,
-        image_location=schedule.image_location,
-        audio_location=schedule.audio_location,
+        image_location=image_path,
+        audio_location=audio_path,
         date_created=datetime.now()
     )
     db.add(new_schedule)
@@ -80,25 +86,35 @@ async def update_schedule(
     schedule: ScheduleDto,
     db: Session) -> Optional[ScheduleDto]:
     """
-    Update an existing schedule in the database.
+    Update an existing schedule in the database and transfer associated files if updated.
 
     Args:
-    - id (int): The unique identifier of the schedule to update.
+    - schedule_id (int): The unique identifier of the schedule to update.
     - schedule (ScheduleDto): The DTO containing the updated details of the schedule.
     - db (Session): The database session to use for the operation.
 
     Returns:
-    - Optional[ScheduleDto]: The updated schedule mapped to a DTO object if successful, 
+    - Optional[ScheduleDto]: The updated schedule mapped to a DTO object if successful,
     otherwise None.
     """
     existing_schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
     if not existing_schedule:
         return None
+
+    # Transfer files if updated
+    if schedule.image_location != existing_schedule.image_location:
+        image_path = transfer_file(schedule.image_location, f"{schedule.video_title}_image.jpg")
+        existing_schedule.image_location = image_path
+
+    if schedule.audio_location != existing_schedule.audio_location:
+        audio_path = transfer_file(schedule.audio_location, f"{schedule.video_title}_audio.mp3")
+        existing_schedule.audio_location = audio_path
+
+    # Update other fields
     existing_schedule.upload_date = schedule.upload_date
     existing_schedule.executed = schedule.executed
     existing_schedule.video_title = schedule.video_title
-    existing_schedule.image_location = schedule.image_location
-    existing_schedule.audio_location = schedule.audio_location
+
     db.commit()
     db.refresh(existing_schedule)
     return ScheduleDto.model_validate(existing_schedule)

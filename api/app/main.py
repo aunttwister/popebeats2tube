@@ -7,8 +7,11 @@ Modules:
 """
 
 from fastapi import FastAPI
-from app.controllers import router
-from app.http_response import (
+from app.endpoints.schedule_mgmt_endpoint import schedule_mgmt_router
+from app.endpoints.config_mgmt_endpoint import config_mgmt_router
+from app.endpoints.auth_endpoint import auth_router
+from app.endpoints.instant_upload_endpoint import instant_upload_router
+from app.utils.http_response_util import (
     not_found_handler,
     forbidden_handler,
     unauthorized_handler,
@@ -21,18 +24,10 @@ app = FastAPI()
 # Include the upload_tune router
 # app.include_router(router, prefix="/upload_tune", tags=["upload_tune"])
 # Include the schedule_upload router
-app.include_router(router, prefix="/schedule_upload", tags=["schedule_upload"])
-
-# Root endpoint
-@app.get("/")
-async def root():
-    """
-    Root endpoint of the application.
-
-    Returns:
-    - A welcome message indicating that the API is up and running.
-    """
-    return {"message": "Welcome to the Schedule Management API!"}
+app.include_router(schedule_mgmt_router, prefix="/schedule_upload", tags=["schedule_upload"])
+app.include_router(config_mgmt_router, prefix="/config_management", tags=["config_management"])
+app.include_router(auth_router, prefix="/auth", tags=["auth"])
+app.include_router(instant_upload_router, prefix="/instant_upload", tags=["instant_upload"])
 
 # Register exception handlers
 app.add_exception_handler(404, not_found_handler)

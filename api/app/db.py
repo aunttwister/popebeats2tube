@@ -18,12 +18,17 @@ Dependencies:
 - SQLite: File-based database used for this application.
 """
 
+import uuid
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from app.services.config_mgmt_service import load_config
 
+CONFIG = load_config("base")
+DATABASE = CONFIG.get("db", "")
+CONN_STR = DATABASE.get("conn_str", "")
 # SQLite file-based database connection URL
-SQLALCHEMY_DATABASE_URL = "sqlite:\\192.168.1.100\D$\database\sqlite\popebeats2tube.dev"
+SQLALCHEMY_DATABASE_URL = CONN_STR
 
 # Create a database engine
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
@@ -56,6 +61,25 @@ class Schedule(Base):
     video_title = Column(String)
     image_location = Column(String)
     audio_location = Column(String)
+    
+class User(Base):
+    """
+    Represents the 'users' table in the database.
+
+    Attributes:
+    - id (int): The primary key and unique identifier for each user.
+    - email (str): The email address of the user. Must be unique.
+    - youtube_api_key (str): The YouTube API key associated with the user.
+    - date_created (datetime): The date and time when the user record was created.
+    - is_active (bool): Indicates whether the user's account is active.
+    """
+    __tablename__ = 'users'
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()), index=True)
+    email = Column(String, unique=True, nullable=False)
+    youtube_api_key = Column(String, nullable=False)
+    date_created = Column(DateTime, nullable=False)
+    is_active = Column(Boolean, default=True)
 
 # Create tables in the database
 Base.metadata.create_all(bind=engine)
