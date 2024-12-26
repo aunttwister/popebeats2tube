@@ -16,7 +16,7 @@ Functions:
 
 from fastapi import APIRouter, HTTPException
 from app.dto import TuneDto
-from app.http_response import (
+from app.utils.http_response_util import (
     response_200
 )
 

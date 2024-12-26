@@ -22,9 +22,13 @@ import uuid
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from app.services.config_mgmt_service import load_config
 
+CONFIG = load_config("base")
+DATABASE = CONFIG.get("db", "")
+CONN_STR = DATABASE.get("conn_str", "")
 # SQLite file-based database connection URL
-SQLALCHEMY_DATABASE_URL = r"sqlite://///192.168.1.100/D$/database/sqlite/popebeats2tube.dev"
+SQLALCHEMY_DATABASE_URL = CONN_STR
 
 # Create a database engine
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})

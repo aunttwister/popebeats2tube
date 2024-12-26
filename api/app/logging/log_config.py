@@ -5,7 +5,7 @@ Sets up logging to a file with daily rotation and 7-day retention, using the Log
 """
 import sys
 from loguru import logger
-from app.settings import LOG_DIR  # Import the global log path from settings
+from app.settings.dir_settings import LOG_DIR
 
 def setup_logging():
     """

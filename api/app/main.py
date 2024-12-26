@@ -11,7 +11,7 @@ from app.endpoints.schedule_mgmt_endpoint import schedule_mgmt_router
 from app.endpoints.config_mgmt_endpoint import config_mgmt_router
 from app.endpoints.auth_endpoint import auth_router
 from app.endpoints.instant_upload_endpoint import instant_upload_router
-from app.http_response import (
+from app.utils.http_response_util import (
     not_found_handler,
     forbidden_handler,
     unauthorized_handler,
