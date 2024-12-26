@@ -7,7 +7,7 @@ from app.utils.file_path_util import generate_file_path, validate_and_create_pat
 import mimetypes
 
 # Load configuration
-CONFIG = load_config("base")
+CONFIG = load_config()
 FILE_SHARE_CONFIG = CONFIG.get("file_share", {})
 IP_ADDR = FILE_SHARE_CONFIG.get("ip_addr", "")
 BASE_PATH = FILE_SHARE_CONFIG.get("base_path", "")

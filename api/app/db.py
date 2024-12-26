@@ -24,7 +24,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from app.services.config_mgmt_service import load_config
 
-CONFIG = load_config("base")
+CONFIG = load_config()
 DATABASE = CONFIG.get("db", "")
 CONN_STR = DATABASE.get("conn_str", "")
 # SQLite file-based database connection URL

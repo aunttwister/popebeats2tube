@@ -15,7 +15,7 @@ CONFIG_FILE : str
 import json
 import os
 
-def load_config(scope_name: str):
+def load_config():
     """
     Dynamically load configuration for a given scope.
 
@@ -59,7 +59,10 @@ def load_config(scope_name: str):
     - This function does not validate the structure or contents of the configuration file. For validation, 
       consider using a schema validation library such as `jsonschema` or `pydantic`.
     """
-    config_file = f"{scope_name}_config.json"
+    
+    config_file = "config.json"
+    
+
     config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "config", config_file)
     
     if not os.path.exists(config_path):

@@ -25,7 +25,7 @@ from google.auth.transport import requests
 from app.db import User, get_db_session
 from app.services.config_mgmt_service import load_config
 
-CONFIG = load_config("base")
+CONFIG = load_config()
 GOOGLE_CLIENT_ID = CONFIG.get("google_client_id", "")
 SECRET_KEY = CONFIG.get("jwt_secret", "")
 ALGORITHM = CONFIG.get("algorithm", "")
