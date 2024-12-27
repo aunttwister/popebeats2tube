@@ -41,7 +41,6 @@ async def google_auth(auth_request: AuthRequestDto):
     - 401: If the user does not exist in the database or is unauthorized.
     """
     # Layer 1: Verify Google OAuth Token
-    idinfo
     try:
         idinfo = verify_google_token(auth_request.token)
     except ValueError:

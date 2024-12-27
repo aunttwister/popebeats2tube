@@ -18,6 +18,7 @@ Dependencies:
 - SQLite: File-based database used for this application.
 """
 
+from contextlib import contextmanager
 import uuid
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean
 from sqlalchemy.ext.declarative import declarative_base
@@ -84,10 +85,10 @@ class User(Base):
 # Create tables in the database
 Base.metadata.create_all(bind=engine)
 
+@contextmanager
 def get_db_session():
     """
-    Dependency function to obtain a database session.
-
+    Dependency function to obtain a database session as a context manager.
     Yields:
     - SessionLocal: An active database session for performing queries and transactions.
     

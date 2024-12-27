@@ -7,6 +7,7 @@ Modules:
 """
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.endpoints.schedule_mgmt_endpoint import schedule_mgmt_router
 from app.endpoints.config_mgmt_endpoint import config_mgmt_router
 from app.endpoints.auth_endpoint import auth_router
@@ -20,6 +21,21 @@ from app.utils.http_response_util import (
 )
 
 app = FastAPI()
+
+origins = [
+    "http://localhost:3000",  # Your React frontend
+    "http://127.0.0.1:3000",  # Alternative localhost format
+    # Add more origins as needed
+]
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,  # List of allowed origins
+    allow_credentials=True,  # Allow cookies to be included
+    allow_methods=["*"],  # Allow all HTTP methods
+    allow_headers=["*"],  # Allow all headers
+)
 
 # Include the upload_tune router
 # app.include_router(router, prefix="/upload_tune", tags=["upload_tune"])

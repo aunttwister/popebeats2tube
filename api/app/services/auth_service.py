@@ -19,17 +19,21 @@ Functions:
 The module ensures that only authenticated users can access protected endpoints and interact with the
 system securely.
 """
+from fastapi import HTTPException
 import jwt
+from google.auth.exceptions import GoogleAuthError
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from app.db import User, get_db_session
 from app.services.config_mgmt_service import load_config
 
 CONFIG = load_config()
-GOOGLE_CLIENT_ID = CONFIG.get("google_client_id", "")
-SECRET_KEY = CONFIG.get("jwt_secret", "")
-ALGORITHM = CONFIG.get("algorithm", "")
-JWT_EXPIRATION_TIME = CONFIG.get("exp_time", "")
+AUTH = CONFIG.get("auth", {})
+GOOGLE_CLIENT_ID = AUTH.get("google_client_id", "")
+SECRET_KEY = AUTH.get("jwt_secret", "")
+ALGORITHM = AUTH.get("algorithm", "")
+JWT_EXPIRATION_TIME = AUTH.get("exp_time", "")
+
 
 def verify_google_token(token: str):
     """
@@ -47,10 +51,15 @@ def verify_google_token(token: str):
 
     Raises:
     -------
-    google.auth.exceptions.GoogleAuthError
+    GoogleAuthError
         If the token is invalid or expired, a Google authentication error is raised.
     """
-    return id_token.verify_oauth2_token(token, requests.Request(), GOOGLE_CLIENT_ID)
+    print(GOOGLE_CLIENT_ID)
+    try:
+        idinfo = id_token.verify_oauth2_token(token, requests.Request(), GOOGLE_CLIENT_ID)
+        return idinfo
+    except ValueError as e:
+        raise GoogleAuthError(f"Invalid or expired token: {e}")
 
 def create_jwt(user_id: int):
     """
@@ -96,11 +105,11 @@ def verify_user(email: str):
     ValueError
         If no user is found with the given email, an exception is raised.
     """
-    db = get_db_session()
-    user = db.query(User).filter(User.email == email).first()
+    with get_db_session() as db:  # 'with' ensures session is properly closed after use
+        user = db.query(User).filter(User.email == email).first()
 
     if not user:
-        raise ValueError(f"User with email {email} not found.")
+        raise HTTPException(f"User with email {email} not found.")
     
     return user
 
@@ -123,10 +132,11 @@ def get_youtube_api_key_by_user_id(user_id: str) -> str:
     ValueError
         If no user with the given user_id is found in the database.
     """
-    db = get_db_session()
-    user = db.query(User).filter(User.id == user_id).first()
+    
+    with get_db_session() as db:  # 'with' ensures session is properly closed after use
+        user = db.query(User).filter(User.id == user_id).first()
 
     if not user:
-        raise ValueError(f"User with ID {user_id} not found.")
+        raise HTTPException(f"User with ID {user_id} not found.")
 
     return user.youtube_api_key
