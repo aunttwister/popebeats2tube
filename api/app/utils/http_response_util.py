@@ -50,7 +50,7 @@ def unauthorized_handler(request: Request, exc: HTTPException):
     """
     Handles 401 errors (Unauthorized access).
     """
-    return create_response(401, "Authentication required", exc.detail, {"path": str(request.url)})
+    return create_response(401, "Unauthorized access", exc.detail, {"path": str(request.url)})
 
 def bad_request_handler(request: Request, exc: HTTPException):
     """

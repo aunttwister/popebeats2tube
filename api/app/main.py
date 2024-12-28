@@ -12,6 +12,7 @@ from app.endpoints.schedule_mgmt_endpoint import schedule_mgmt_router
 from app.endpoints.config_mgmt_endpoint import config_mgmt_router
 from app.endpoints.auth_endpoint import auth_router
 from app.endpoints.instant_upload_endpoint import instant_upload_router
+from app.endpoints.user_mgmt_endpoint import user_mgmt_router
 from app.utils.http_response_util import (
     not_found_handler,
     forbidden_handler,
@@ -44,6 +45,7 @@ app.include_router(schedule_mgmt_router, prefix="/schedule_upload", tags=["sched
 app.include_router(config_mgmt_router, prefix="/config_management", tags=["config_management"])
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
 app.include_router(instant_upload_router, prefix="/instant_upload", tags=["instant_upload"])
+app.include_router(user_mgmt_router, prefix="/user_mgmt", tags=["user_mgmt"])
 
 # Register exception handlers
 app.add_exception_handler(404, not_found_handler)

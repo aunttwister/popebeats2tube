@@ -48,12 +48,12 @@ async def google_auth(auth_request: AuthRequestDto):
     
     if "email" not in idinfo:
         raise HTTPException(status_code=401, detail="Invalid Google Token: Missing email")
-    email = idinfo["email"]
+    email = str(idinfo["email"])
     
     # Layer 2: Validate YouTube API Key
     user = verify_user(email)
     if not user:
-        raise HTTPException(status_code=401, detail="Unauthorized acccess: User not found.")
+        raise HTTPException(status_code=401, detail=f"User with email '{email}' is not authorized for access.")
 
     # Generate JWT
     jwt_token = create_jwt(user_id=user.id)

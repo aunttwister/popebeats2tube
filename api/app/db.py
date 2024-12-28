@@ -19,7 +19,9 @@ Dependencies:
 """
 
 from contextlib import contextmanager
+from typing import Generator
 import uuid
+from requests import Session
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -32,8 +34,11 @@ CONN_STR = DATABASE.get("conn_str", "")
 SQLALCHEMY_DATABASE_URL = CONN_STR
 
 # Create a database engine
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
-
+engine = create_engine(SQLALCHEMY_DATABASE_URL,
+    connect_args={"check_same_thread": False, "timeout": 30},
+    pool_size=5,
+    max_overflow=10
+)
 # Create a configured session factory for the database
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -85,8 +90,7 @@ class User(Base):
 # Create tables in the database
 Base.metadata.create_all(bind=engine)
 
-@contextmanager
-def get_db_session():
+def get_db_session() -> Generator[Session, None, None]:
     """
     Dependency function to obtain a database session as a context manager.
     Yields:

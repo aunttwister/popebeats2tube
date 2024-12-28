@@ -19,11 +19,12 @@ Functions:
 The module ensures that only authenticated users can access protected endpoints and interact with the
 system securely.
 """
-from fastapi import HTTPException
+from datetime import datetime, timedelta, timezone
 import jwt
 from google.auth.exceptions import GoogleAuthError
 from google.oauth2 import id_token
 from google.auth.transport import requests
+from sqlalchemy.orm import Session
 from app.db import User, get_db_session
 from app.services.config_mgmt_service import load_config
 
@@ -54,7 +55,6 @@ def verify_google_token(token: str):
     GoogleAuthError
         If the token is invalid or expired, a Google authentication error is raised.
     """
-    print(GOOGLE_CLIENT_ID)
     try:
         idinfo = id_token.verify_oauth2_token(token, requests.Request(), GOOGLE_CLIENT_ID)
         return idinfo
@@ -79,10 +79,10 @@ def create_jwt(user_id: int):
     ------
     The token is signed using the `SECRET_KEY` and the algorithm specified in the configuration.
     The expiration time is determined by the configuration value `JWT_EXPIRATION_TIME`.
-    """
+    """ 
     payload = {
         "user_id": user_id,
-        "exp": jwt.datetime.utcnow() + jwt.timedelta(seconds=JWT_EXPIRATION_TIME),
+        "exp": datetime.now(timezone.utc) + timedelta(seconds=int(JWT_EXPIRATION_TIME)),
     }
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -105,12 +105,12 @@ def verify_user(email: str):
     ValueError
         If no user is found with the given email, an exception is raised.
     """
-    with get_db_session() as db:  # 'with' ensures session is properly closed after use
+    db: Session = next(get_db_session())  # Get the session from the generator
+    try:
         user = db.query(User).filter(User.email == email).first()
+    finally:
+        db.close()
 
-    if not user:
-        raise HTTPException(f"User with email {email} not found.")
-    
     return user
 
 def get_youtube_api_key_by_user_id(user_id: str) -> str:
@@ -136,7 +136,8 @@ def get_youtube_api_key_by_user_id(user_id: str) -> str:
     with get_db_session() as db:  # 'with' ensures session is properly closed after use
         user = db.query(User).filter(User.id == user_id).first()
 
-    if not user:
-        raise HTTPException(f"User with ID {user_id} not found.")
+    # below should be moved to endpoint implementation
+    # if not user:
+    #     raise HTTPException(status_code=404, detail="User with ID {user_id} not found.")
 
     return user.youtube_api_key
