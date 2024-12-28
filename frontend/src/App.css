@@ -1,38 +1,55 @@
-.App {
+@font-face {
+  font-family: 'Rubik';
+  src: url('./fonts/Rubik-VariableFont_wght.ttf') format('truetype');
+}
+
+body {
+  margin: 0;
+  font-family: 'Rubik', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+  background-color: #f4f4f9; /* Light background */
+  color: #333; /* Default text color */
+}
+
+.google-login-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; /* Full screen height */
   text-align: center;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.google-login-container h1 {
+  font-size: 2rem; /* Heading size */
+  margin-bottom: 20px; /* Space below heading */
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.google-login-container button {
+  padding: 10px 20px; /* Button padding */
+  font-size: 1rem; /* Button text size */
+  color: #fff; /* Button text color */
+  background-color: #4285f4; /* Google blue */
+  border: none; /* Remove border */
+  border-radius: 5px; /* Rounded corners */
+  cursor: pointer; /* Pointer cursor */
+  transition: background-color 0.3s ease; /* Hover effect */
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+.google-login-container button:hover {
+  background-color: #357ae8; /* Darker blue on hover */
 }
 
-.App-link {
-  color: #61dafb;
+.toastify-container {
+  z-index: 9999; /* Ensures the toasts are displayed above other content */
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.toast-title {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.toast-message {
+  font-size: 14px;
+  margin: 0;
 }
