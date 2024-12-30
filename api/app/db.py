@@ -19,7 +19,9 @@ Dependencies:
 """
 
 from contextlib import contextmanager
+from typing import Generator
 import uuid
+from requests import Session
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -32,8 +34,11 @@ CONN_STR = DATABASE.get("conn_str", "")
 SQLALCHEMY_DATABASE_URL = CONN_STR
 
 # Create a database engine
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
-
+engine = create_engine(SQLALCHEMY_DATABASE_URL,
+    connect_args={"check_same_thread": False, "timeout": 30},
+    pool_size=5,
+    max_overflow=10
+)
 # Create a configured session factory for the database
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -70,7 +75,9 @@ class User(Base):
     Attributes:
     - id (int): The primary key and unique identifier for each user.
     - email (str): The email address of the user. Must be unique.
-    - youtube_api_key (str): The YouTube API key associated with the user.
+    - access_token (str): The OAuth access token for the user.
+    - refresh_token (str): The OAuth refresh token for the user.
+    - token_expiry (datetime): The expiration time of the access token.
     - date_created (datetime): The date and time when the user record was created.
     - is_active (bool): Indicates whether the user's account is active.
     """
@@ -78,15 +85,15 @@ class User(Base):
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()), index=True)
     email = Column(String, unique=True, nullable=False)
-    youtube_api_key = Column(String, nullable=False)
+    refresh_token = Column(String, nullable=True)
+    token_expiry = Column(DateTime, nullable=True)
     date_created = Column(DateTime, nullable=False)
     is_active = Column(Boolean, default=True)
 
 # Create tables in the database
 Base.metadata.create_all(bind=engine)
 
-@contextmanager
-def get_db_session():
+def get_db_session() -> Generator[Session, None, None]:
     """
     Dependency function to obtain a database session as a context manager.
     Yields:

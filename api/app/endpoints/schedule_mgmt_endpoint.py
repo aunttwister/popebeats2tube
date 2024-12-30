@@ -13,7 +13,7 @@ from app.utils.http_response_util import (
     response_201,
     response_204
 )
-from app.services.schedule_mgmt_service import (
+from app.repositories.schedule_mgmt_repository import (
     get_schedules,
     get_schedule_by_id,
     create_schedule,
@@ -24,7 +24,7 @@ from app.services.schedule_mgmt_service import (
 schedule_mgmt_router = APIRouter()
 
 # /schedule_upload/get - GET list of schedules
-@schedule_mgmt_router.get("/get")
+@schedule_mgmt_router.get("")
 async def get_schedules_list(db: Session = Depends(get_db_session)):
     """
     Retrieve a list of all schedules from the database.
@@ -39,7 +39,7 @@ async def get_schedules_list(db: Session = Depends(get_db_session)):
     return response_200("Success.", schedules)
 
 # /schedule_upload/get/{id} - GET schedule by ID
-@schedule_mgmt_router.get("/get/{schedule_id}")
+@schedule_mgmt_router.get("/{schedule_id}")
 async def get_schedule_by_id_route(
     schedule_id: int,
     db: Session = Depends(get_db_session)):
@@ -60,7 +60,7 @@ async def get_schedule_by_id_route(
     return response_200("Success.", schedule)
 
 # /schedule_upload/create - POST create new schedule
-@schedule_mgmt_router.post("/create")
+@schedule_mgmt_router.post("")
 async def create_schedule_entry(
     schedule: ScheduleDto,
     db: Session = Depends(get_db_session)):
@@ -81,7 +81,7 @@ async def create_schedule_entry(
     return response_201("Upload schedule created.", result)
 
 # /schedule_upload/update/{id} - PUT update schedule by ID
-@schedule_mgmt_router.put("/update/{schedule_id}")
+@schedule_mgmt_router.put("/{schedule_id}")
 async def update_schedule_entry(
     schedule_id: int,
     schedule: ScheduleDto,
@@ -107,7 +107,7 @@ async def update_schedule_entry(
     return response_204("Upload schedule updated.")
 
 # /schedule_upload/delete/{id} - DELETE schedule by ID
-@schedule_mgmt_router.delete("/delete/{schedule_id}")
+@schedule_mgmt_router.delete("/{schedule_id}")
 async def delete_schedule_entry(
     schedule_id: int,
     db: Session = Depends(get_db_session)):

@@ -3,49 +3,49 @@ This module provides FastAPI endpoints for managing and retrieving configuration
 
 Endpoints:
 ----------
-- `/config`: A GET endpoint to retrieve the current configuration.
-- `/reload`: A POST endpoint to reload the configuration from environment variables or a config file. This endpoint is protected and requires an admin API key for access.
+- `/`: A GET endpoint to retrieve the current configuration.
+- `/reload`: A POST endpoint to reload the configuration from the configuration file. 
+  This endpoint is protected and requires an admin API key for access.
 
-The module provides functionality to fetch and update configuration settings such as log level and retry count, while ensuring sensitive configurations like the database password and API secret are managed securely.
+Features:
+---------
+- Fetch and update configuration settings dynamically.
+- Protect sensitive operations like configuration reloads with an admin API key.
 """
 
-from fastapi import APIRouter, FastAPI, Header, HTTPException
+from fastapi import APIRouter, Header, HTTPException
 import os
 
 from app.services.config_mgmt_service import load_config
 
 config_mgmt_router = APIRouter()
 
-# Example current configuration
-current_config = {"log_level": "INFO", "retry_count": 3}
+# Global variable to store the current configuration
+current_config = load_config()  # Initial load of the configuration
 
-# Sensitive configurations from environment variables
-db_password = os.getenv("DB_PASSWORD")
-api_secret = os.getenv("API_SECRET")
-
-@config_mgmt_router.get("/config")
+@config_mgmt_router.get("")
 def get_config():
     """
     Retrieve and return the current configuration.
 
     This endpoint returns the configuration data in the form of a dictionary containing key-value pairs,
-    which represent various application settings such as log level and retry count.
+    representing various application settings loaded from the configuration file.
 
     Returns:
     --------
     dict
-        The current configuration loaded from the config file or environment variables.
+        The current configuration loaded from the cached configuration.
     """
-    return load_config()
+    return current_config
 
 @config_mgmt_router.post("/reload")
-def load_configuration(admin_api_key: str = Header(...)):
+def reload_configuration(admin_api_key: str = Header(...)):
     """
-    Reload the application configuration from environment variables or configuration files.
+    Reload the application configuration from the configuration file.
 
     This endpoint is protected and can only be accessed with a valid admin API key. If the provided API key
     does not match the one stored in the environment, a 403 Forbidden error will be raised. Upon successful
-    authorization, the configuration values such as log level and retry count will be reloaded.
+    authorization, the cached configuration is cleared, and the configuration file is reloaded.
 
     Args:
     -----
@@ -66,8 +66,10 @@ def load_configuration(admin_api_key: str = Header(...)):
         raise HTTPException(status_code=403, detail="Invalid admin API key.")
     
     global current_config
-    # Reload logic (from env variables or configuration file)
-    current_config["log_level"] = os.getenv("LOG_LEVEL", current_config["log_level"])
-    current_config["retry_count"] = int(os.getenv("RETRY_COUNT", current_config["retry_count"]))
-    
+    global _config  # Access the global cached variable from load_config
+
+    # Clear the cached configuration and reload
+    _config = None  # Reset cached configuration
+    current_config = load_config()
+
     return {"message": "Configuration reloaded successfully.", "config": current_config}

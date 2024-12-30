@@ -12,7 +12,10 @@ Classes:
 from typing import Optional
 from fastapi import UploadFile
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
+
+class UserCreateDTO(BaseModel):
+    email: EmailStr
 
 class AuthRequestDto(BaseModel):
     """

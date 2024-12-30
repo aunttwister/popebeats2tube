@@ -12,6 +12,8 @@ from app.endpoints.schedule_mgmt_endpoint import schedule_mgmt_router
 from app.endpoints.config_mgmt_endpoint import config_mgmt_router
 from app.endpoints.auth_endpoint import auth_router
 from app.endpoints.instant_upload_endpoint import instant_upload_router
+from app.endpoints.user_mgmt_endpoint import user_mgmt_router
+from app.services.config_mgmt_service import load_config
 from app.utils.http_response_util import (
     not_found_handler,
     forbidden_handler,
@@ -19,6 +21,9 @@ from app.utils.http_response_util import (
     bad_request_handler,
     internal_server_error_handler
 )
+
+# Load configuration during startup
+CONFIG = load_config()
 
 app = FastAPI()
 
@@ -37,13 +42,21 @@ app.add_middleware(
     allow_headers=["*"],  # Allow all headers
 )
 
+@app.middleware("http")
+async def add_security_headers(request, call_next):
+    response = await call_next(request)
+    response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+    response.headers["Cross-Origin-Embedder-Policy"] = "require-corp"
+    return response
+
 # Include the upload_tune router
 # app.include_router(router, prefix="/upload_tune", tags=["upload_tune"])
 # Include the schedule_upload router
-app.include_router(schedule_mgmt_router, prefix="/schedule_upload", tags=["schedule_upload"])
-app.include_router(config_mgmt_router, prefix="/config_management", tags=["config_management"])
+app.include_router(schedule_mgmt_router, prefix="/schedule-upload", tags=["schedule-upload"])
+app.include_router(config_mgmt_router, prefix="/config-management", tags=["config-management"])
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
-app.include_router(instant_upload_router, prefix="/instant_upload", tags=["instant_upload"])
+app.include_router(instant_upload_router, prefix="/instant-upload", tags=["instant-upload"])
+app.include_router(user_mgmt_router, prefix="/user-mgmt", tags=["user-mgmt"])
 
 # Register exception handlers
 app.add_exception_handler(404, not_found_handler)
