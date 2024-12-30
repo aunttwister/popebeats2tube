@@ -14,6 +14,7 @@ from app.endpoints.auth_endpoint import auth_router
 from app.endpoints.instant_upload_endpoint import instant_upload_router
 from app.endpoints.user_mgmt_endpoint import user_mgmt_router
 from app.services.config_mgmt_service import load_config
+from app.logging.logging_setup import log_message, setup_logging
 from app.utils.http_response_util import (
     not_found_handler,
     forbidden_handler,
@@ -22,9 +23,16 @@ from app.utils.http_response_util import (
     internal_server_error_handler
 )
 
+# Initialize logging before anything else
+logger = setup_logging()
+
+# Log application initialization
+log_message("DEBUG", "Initializing the application...")
+
 # Load configuration during startup
 CONFIG = load_config()
 
+# Create FastAPI app instance
 app = FastAPI()
 
 origins = [
@@ -49,9 +57,7 @@ async def add_security_headers(request, call_next):
     response.headers["Cross-Origin-Embedder-Policy"] = "require-corp"
     return response
 
-# Include the upload_tune router
-# app.include_router(router, prefix="/upload_tune", tags=["upload_tune"])
-# Include the schedule_upload router
+# Include routers
 app.include_router(schedule_mgmt_router, prefix="/schedule-upload", tags=["schedule-upload"])
 app.include_router(config_mgmt_router, prefix="/config-management", tags=["config-management"])
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
@@ -64,3 +70,12 @@ app.add_exception_handler(403, forbidden_handler)
 app.add_exception_handler(401, unauthorized_handler)
 app.add_exception_handler(400, bad_request_handler)
 app.add_exception_handler(500, internal_server_error_handler)
+
+# Add startup and shutdown event handlers
+@app.on_event("startup")
+async def startup_event():
+    log_message("DEBUG", "Application has started.")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    log_message("DEBUG", "Application is stopping.")
