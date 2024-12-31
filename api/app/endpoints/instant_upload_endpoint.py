@@ -25,7 +25,7 @@ Functions:
 from fastapi import APIRouter, HTTPException
 from app.dto import TuneDto
 from app.utils.http_response_util import response_200
-from app.logging.logging_setup import log_message
+from app.logging.logging_setup import logger
 
 instant_upload_router = APIRouter()
 
@@ -55,21 +55,21 @@ async def upload_single(tune: TuneDto):
     HTTPException
         400: If the upload fails or the result is empty.
     """
-    log_message("DEBUG", "Starting single tune upload.")
-    log_message("INFO", f"Uploading tune: {tune.model_dump()}")
+    logger.debug("Starting single tune upload.")
+    logger.info(f"Uploading tune: {tune.model_dump()}")
 
     try:
         # Simulate tune upload processing
         #result = await upload_single_tune(tune)
         result: str = "Simulated Upload Success"  # Replace with actual upload logic
         if not result:
-            log_message("ERROR", "Single tune upload failed.")
+            logger.error("Single tune upload failed.")
             raise HTTPException(status_code=400, detail="Upload failed")
 
-        log_message("DEBUG", "Single tune upload successful.")
+        logger.debug("Single tune upload successful.")
         return response_200("Upload successful")
     except Exception as e:
-        log_message("ERROR", f"Unexpected error during single tune upload: {str(e)}")
+        logger.error(f"Unexpected error during single tune upload: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
@@ -99,19 +99,19 @@ async def upload_batch(tunes: list[TuneDto]):
     HTTPException
         400: If the batch upload fails or the result is empty.
     """
-    log_message("DEBUG", "Starting batch tune upload.")
-    log_message("INFO", f"Uploading batch of tunes: {[tune.model_dump() for tune in tunes]}")
+    logger.debug("Starting batch tune upload.")
+    logger.info(f"Uploading batch of tunes: {[tune.model_dump() for tune in tunes]}")
 
     try:
         # Simulate batch upload processing
         #result = await upload_batch_tunes(tunes)
         result: str = "Simulated Batch Upload Success"  # Replace with actual batch upload logic
         if not result:
-            log_message("ERROR", "Batch tune upload failed.")
+            log_message("Batch tune upload failed.")
             raise HTTPException(status_code=400, detail="Batch upload failed")
 
-        log_message("DEBUG", "Batch tune upload successful.")
+        logger.debug("Batch tune upload successful.")
         return response_200("Batch upload successful")
     except Exception as e:
-        log_message("ERROR", f"Unexpected error during batch tune upload: {str(e)}")
+        logger.error(f"Unexpected error during batch tune upload: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")

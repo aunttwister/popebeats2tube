@@ -4,7 +4,7 @@ from google.auth.transport import requests
 import httpx
 
 from app.services.config_mgmt_service import load_config
-from app.logging.logging_setup import log_message
+from app.logging.logging_setup import logger
 
 CONFIG = load_config()
 GOOGLE_OAUTH = CONFIG.get("google_oauth", {})
@@ -34,14 +34,14 @@ def verify_google_token(token: str):
     GoogleAuthError
         If the token is invalid or expired, a Google authentication error is raised.
     """
-    log_message("DEBUG", "Verifying Google OAuth2 token.")
+    logger.debug("Verifying Google OAuth2 token.")
     try:
         idinfo = id_token.verify_oauth2_token(token, requests.Request(), GOOGLE_CLIENT_ID)
-        log_message("DEBUG", "Token verification successful.")
-        log_message("INFO", f"Token verified for user with email: {idinfo.get('email')}")
+        logger.debug("Token verification successful.")
+        logger.info(f"Token verified for user with email: {idinfo.get('email')}")
         return idinfo
     except ValueError as e:
-        log_message("ERROR", f"Token verification failed: {e}")
+        logger.error(f"Token verification failed: {e}")
         raise GoogleAuthError(f"Invalid or expired token: {e}")
 
 async def get_google_oauth_credentials(auth_code: str):
@@ -63,7 +63,7 @@ async def get_google_oauth_credentials(auth_code: str):
     httpx.HTTPStatusError
         If the HTTP request to exchange the authorization code fails.
     """
-    log_message("DEBUG", "Preparing data for Google OAuth token exchange.")
+    logger.debug("Preparing data for Google OAuth token exchange.")
     token_url = TOKEN_URL
     client_id = GOOGLE_CLIENT_ID
     client_secret = GOOGLE_CLIENT_SECRET
@@ -79,18 +79,18 @@ async def get_google_oauth_credentials(auth_code: str):
         "grant_type": grant_type
     }
 
-    log_message("DEBUG", "Initiating request to exchange authorization code for credentials.")
+    logger.debug("Initiating request to exchange authorization code for credentials.")
     try:
         # Use `httpx` for asynchronous HTTP request
         async with httpx.AsyncClient() as client:
             response = await client.post(token_url, data=token_data)
             response.raise_for_status()  # Raise an exception for HTTP errors
-            log_message("DEBUG", "Token exchange request successful.")
-            log_message("INFO", f"Token exchange response: {response.json()}")
+            logger.debug("Token exchange request successful.")
+            logger.info(f"Token exchange response: {response.json()}")
             return response.json()
     except httpx.HTTPStatusError as e:
-        log_message("ERROR", f"HTTP error during token exchange: {e.response.text}")
+        logger.error(f"HTTP error during token exchange: {e.response.text}")
         raise
     except Exception as e:
-        log_message("CRITICAL", f"Unexpected error during token exchange: {e}")
+        logger.critical(f"Unexpected error during token exchange: {e}")
         raise

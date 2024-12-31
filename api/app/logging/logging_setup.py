@@ -100,25 +100,4 @@ def setup_logging():
 
     return logger
 
-
-def log_message(level, message):
-    """
-    Logs a message at the specified log level.
-
-    This function allows for dynamic logging of messages with different severity levels
-    such as DEBUG, INFO, WARNING, ERROR, or CRITICAL.
-
-    :param level: str
-        The log level for the message (e.g., 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL').
-    :param message: str
-        The message to be logged.
-
-    :raises ValueError:
-        If the specified log level is invalid.
-    """
-    valid_levels = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
-    if level.upper() not in valid_levels:
-        raise ValueError(f"Invalid log level: {level}. Must be one of {valid_levels}.")
-
-    # Log the message at the specified level
-    getattr(logger, level.lower())(message)
+logger = setup_logging()

@@ -27,7 +27,7 @@ from fastapi import UploadFile
 from app.services.config_mgmt_service import load_config
 from app.utils.file_path_util import generate_file_path, validate_and_create_path
 import mimetypes
-from app.logging.logging_setup import log_message
+from app.logging.logging_setup import logger
 
 # Load configuration
 CONFIG = load_config()
@@ -67,19 +67,19 @@ def transfer_file(file: UploadFile, user_email: str, video_title: str) -> str:
     ValueError
         If the file_share configuration is invalid.
     """
-    log_message("DEBUG", f"Starting file transfer for file: {file.filename}, user: {user_email}.")
+    logger.debug(f"Starting file transfer for file: {file.filename}, user: {user_email}.")
     try:
         if not IP_ADDR or not BASE_PATH or not AUDIO_PATH or not IMG_PATH:
-            log_message("ERROR", "File share configuration is invalid.")
+            logger.error("File share configuration is invalid.")
             raise ValueError("File share configuration is invalid. Please check 'ip_addr' and 'base_path'.")
 
         # Determine the file type
         file_type = get_file_type(file)
-        log_message("DEBUG", f"File type determined: {file_type}.")
+        logger.debug(f"File type determined: {file_type}.")
 
         # Generate the destination path
         destination_path = generate_file_path(IP_ADDR, BASE_PATH, user_email, video_title, file_type)
-        log_message("INFO", f"Generated destination path: {destination_path}.")
+        logger.info(f"Generated destination path: {destination_path}.")
 
         # Ensure the destination directory exists
         validate_and_create_path(destination_path)
@@ -91,11 +91,11 @@ def transfer_file(file: UploadFile, user_email: str, video_title: str) -> str:
         with open(destination_file, "wb") as f:
             shutil.copyfileobj(file.file, f)
 
-        log_message("DEBUG", f"File transfer completed successfully for file: {file.filename}.")
-        log_message("INFO", f"File stored at: {destination_file}.")
+        logger.debug(f"File transfer completed successfully for file: {file.filename}.")
+        logger.info(f"File stored at: {destination_file}.")
         return destination_file
     except Exception as e:
-        log_message("ERROR", f"Failed to transfer file {file.filename}: {str(e)}")
+        logger.error(f"Failed to transfer file {file.filename}: {str(e)}")
         raise Exception("Error occurred during file transfer.")
 
 
@@ -123,7 +123,7 @@ def get_file_type(file: UploadFile) -> str:
     ValueError
         If the file type cannot be determined or is not supported.
     """
-    log_message("DEBUG", f"Determining file type for file: {file.filename}.")
+    logger.debug(f"Determining file type for file: {file.filename}.")
     try:
         # Extract MIME type using the file's filename or content type
         mime_type, _ = mimetypes.guess_type(file.filename)
@@ -134,8 +134,8 @@ def get_file_type(file: UploadFile) -> str:
         elif mime_type and mime_type.startswith("image/"):
             return "image"
         else:
-            log_message("ERROR", f"Unsupported file type: {file.filename}.")
+            logger.error(f"Unsupported file type: {file.filename}.")
             raise ValueError(f"Unsupported file type for file: {file.filename}")
     except Exception as e:
-        log_message("ERROR", f"Failed to determine file type for file {file.filename}: {str(e)}")
+        logger.error(f"Failed to determine file type for file {file.filename}: {str(e)}")
         raise

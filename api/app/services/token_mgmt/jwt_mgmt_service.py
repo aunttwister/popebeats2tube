@@ -26,7 +26,7 @@ Functions:
 from datetime import datetime, timedelta, timezone
 import jwt
 from app.services.config_mgmt_service import load_config
-from app.logging.logging_setup import log_message
+from app.logging.logging_setup import logger
 
 # Load configuration values
 CONFIG = load_config()
@@ -66,7 +66,7 @@ def create_jwt(user_id: int) -> str:
     - The token is signed using the `SECRET_KEY` and the algorithm specified in the configuration.
     - The expiration time is determined by the configuration value `JWT_EXPIRATION_TIME`.
     """
-    log_message("DEBUG", f"Starting JWT creation for user ID: {user_id}")
+    logger.debug(f"Starting JWT creation for user ID: {user_id}")
 
     try:
         payload = {
@@ -74,8 +74,8 @@ def create_jwt(user_id: int) -> str:
             "exp": datetime.now(timezone.utc) + timedelta(seconds=int(JWT_EXPIRATION_TIME)),
         }
         token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
-        log_message("DEBUG", f"JWT created for user ID: {user_id}")
+        logger.debug(f"JWT created for user ID: {user_id}")
         return token
     except Exception as e:
-        log_message("ERROR", f"Failed to create JWT: {str(e)}")
+        logger.error(f"Failed to create JWT: {str(e)}")
         raise Exception("JWT creation failed. Please check the logs for details.")

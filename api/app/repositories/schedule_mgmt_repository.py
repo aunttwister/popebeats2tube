@@ -32,7 +32,7 @@ from sqlalchemy.orm import Session
 from app.db import Schedule
 from app.dto import ScheduleDto
 from app.services.file_transfer_service import transfer_file
-from app.logging.logging_setup import log_message
+from app.logging.logging_setup import logger
 
 
 async def get_schedules(db: Session) -> List[ScheduleDto]:
@@ -54,13 +54,13 @@ async def get_schedules(db: Session) -> List[ScheduleDto]:
     - DEBUG: Start and completion of fetching all schedules.
     - ERROR: Failure during schedule retrieval.
     """
-    log_message("DEBUG", "Fetching all schedules from the database.")
+    logger.debug("Fetching all schedules from the database.")
     try:
         schedules = db.query(Schedule).all()
-        log_message("DEBUG", f"Fetched {len(schedules)} schedules.")
+        logger.debug(f"Fetched {len(schedules)} schedules.")
         return [ScheduleDto.model_validate(schedule) for schedule in schedules]
     except Exception as e:
-        log_message("ERROR", f"Failed to fetch schedules: {str(e)}")
+        logger.error(f"Failed to fetch schedules: {str(e)}")
         raise Exception("Error occurred while fetching schedules.")
 
 
@@ -86,17 +86,17 @@ async def get_schedule_by_id(schedule_id: int, db: Session) -> Optional[Schedule
     - INFO: The schedule ID being queried.
     - ERROR: Failure to find or retrieve the schedule.
     """
-    log_message("DEBUG", f"Fetching schedule with ID: {schedule_id}.")
+    logger.debug(f"Fetching schedule with ID: {schedule_id}.")
     try:
         schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
         if schedule:
-            log_message("DEBUG", f"Schedule found: ID {schedule_id}.")
-            log_message("INFO", f"Schedule details: {schedule}.")
+            logger.debug(f"Schedule found: ID {schedule_id}.")
+            logger.info(f"Schedule details: {schedule}.")
             return ScheduleDto.model_validate(schedule)
-        log_message("DEBUG", f"Schedule not found: ID {schedule_id}.")
+        logger.debug(f"Schedule not found: ID {schedule_id}.")
         return None
     except Exception as e:
-        log_message("ERROR", f"Error fetching schedule ID {schedule_id}: {str(e)}")
+        logger.error(f"Error fetching schedule ID {schedule_id}: {str(e)}")
         raise Exception("Error occurred while fetching schedule details.")
 
 
@@ -122,11 +122,11 @@ async def create_schedule(schedule: ScheduleDto, db: Session) -> ScheduleDto:
     - INFO: Details of the created schedule.
     - ERROR: Failures during file transfer or database operations.
     """
-    log_message("DEBUG", f"Creating new schedule: {schedule.video_title}.")
+    logger.debug(f"Creating new schedule: {schedule.video_title}.")
     try:
         image_path = transfer_file(schedule.img, schedule.video_title)
         audio_path = transfer_file(schedule.audio, schedule.video_title)
-        log_message("DEBUG", "File transfers completed successfully.")
+        logger.debug("File transfers completed successfully.")
 
         new_schedule = Schedule(
             upload_date=schedule.upload_date,
@@ -139,11 +139,11 @@ async def create_schedule(schedule: ScheduleDto, db: Session) -> ScheduleDto:
         db.add(new_schedule)
         db.commit()
         db.refresh(new_schedule)
-        log_message("DEBUG", "New schedule added to the database.")
-        log_message("INFO", f"Created schedule: {schedule.video_title}.")
+        logger.debug("New schedule added to the database.")
+        logger.info(f"Created schedule: {schedule.video_title}.")
         return ScheduleDto.model_validate(new_schedule)
     except Exception as e:
-        log_message("ERROR", f"Failed to create schedule: {str(e)}")
+        logger.error(f"Failed to create schedule: {str(e)}")
         raise Exception("Error occurred while creating the schedule.")
 
 
@@ -171,11 +171,11 @@ async def update_schedule(schedule_id: int, schedule: ScheduleDto, db: Session) 
     - INFO: Details of the updated schedule.
     - ERROR: Failures during file updates or database operations.
     """
-    log_message("DEBUG", f"Updating schedule with ID: {schedule_id}.")
+    logger.debug(f"Updating schedule with ID: {schedule_id}.")
     try:
         existing_schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
         if not existing_schedule:
-            log_message("DEBUG", f"Schedule not found: ID {schedule_id}.")
+            logger.debug(f"Schedule not found: ID {schedule_id}.")
             return None
 
         # Handle file transfers if necessary
@@ -193,11 +193,11 @@ async def update_schedule(schedule_id: int, schedule: ScheduleDto, db: Session) 
 
         db.commit()
         db.refresh(existing_schedule)
-        log_message("DEBUG", f"Schedule ID {schedule_id} updated successfully.")
-        log_message("INFO", f"Updated schedule: {existing_schedule.video_title}.")
+        logger.debug(f"Schedule ID {schedule_id} updated successfully.")
+        logger.info(f"Updated schedule: {existing_schedule.video_title}.")
         return ScheduleDto.model_validate(existing_schedule)
     except Exception as e:
-        log_message("ERROR", f"Failed to update schedule ID {schedule_id}: {str(e)}")
+        logger.error(f"Failed to update schedule ID {schedule_id}: {str(e)}")
         raise Exception("Error occurred while updating the schedule.")
 
 
@@ -222,17 +222,17 @@ async def delete_schedule(schedule_id: int, db: Session) -> bool:
     - DEBUG: Start and success of schedule deletion.
     - ERROR: Failures during schedule deletion.
     """
-    log_message("DEBUG", f"Deleting schedule with ID: {schedule_id}.")
+    logger.debug(f"Deleting schedule with ID: {schedule_id}.")
     try:
         schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
         if not schedule:
-            log_message("DEBUG", f"Schedule not found for deletion: ID {schedule_id}.")
+            logger.debug(f"Schedule not found for deletion: ID {schedule_id}.")
             return False
 
         db.delete(schedule)
         db.commit()
-        log_message("DEBUG", f"Schedule ID {schedule_id} deleted successfully.")
+        logger.debug(f"Schedule ID {schedule_id} deleted successfully.")
         return True
     except Exception as e:
-        log_message("ERROR", f"Failed to delete schedule ID {schedule_id}: {str(e)}")
+        logger.error(f"Failed to delete schedule ID {schedule_id}: {str(e)}")
         raise Exception("Error occurred while deleting the schedule.")

@@ -14,20 +14,17 @@ from app.endpoints.auth_endpoint import auth_router
 from app.endpoints.instant_upload_endpoint import instant_upload_router
 from app.endpoints.user_mgmt_endpoint import user_mgmt_router
 from app.services.config_mgmt_service import load_config
-from app.logging.logging_setup import log_message, setup_logging
+from app.logging.logging_setup import logger
 from app.utils.http_response_util import (
     not_found_handler,
-    forbidden_handler,
-    unauthorized_handler,
+    forbidden_handler,    unauthorized_handler,
     bad_request_handler,
     internal_server_error_handler
 )
 
-# Initialize logging before anything else
-logger = setup_logging()
 
 # Log application initialization
-log_message("DEBUG", "Initializing the application...")
+logger.debug("Initializing the application...")
 
 # Load configuration during startup
 CONFIG = load_config()
@@ -74,8 +71,8 @@ app.add_exception_handler(500, internal_server_error_handler)
 # Add startup and shutdown event handlers
 @app.on_event("startup")
 async def startup_event():
-    log_message("DEBUG", "Application has started.")
+    logger.debug("Application has started.")
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    log_message("DEBUG", "Application is stopping.")
+    logger.debug("Application is stopping.")

@@ -7,7 +7,7 @@ from app.services.token_mgmt.jwt_mgmt_service import create_jwt
 from app.repositories.user_mgmt_repository import persist_credentials, verify_user
 from app.services.google_oauth_service import get_google_oauth_credentials, verify_google_token
 from app.services.config_mgmt_service import load_config
-from app.logging.logging_setup import log_message
+from app.logging.logging_setup import logger
 import httpx
 
 from app.utils.http_response_util import create_response
@@ -23,8 +23,8 @@ async def google_auth(auth_request: AuthRequestDto):
     Handles Google OAuth login and checks for existing credentials.
     """
     # Log incoming request content
-    log_message("DEBUG", f"Received Google OAuth login request.")
-    log_message("INFO", f"Received Google OAuth login request with content: {auth_request.model_dump_json()}")
+    logger.debug("Received Google OAuth login request.")
+    logger.info(f"Received Google OAuth login request with content: {auth_request.model_dump_json()}")
 
     try:
         idinfo = verify_google_token(auth_request.token)
@@ -33,7 +33,7 @@ async def google_auth(auth_request: AuthRequestDto):
 
     email = idinfo.get("email")
     if not email:
-        log_message("ERROR", "Google token is missing email.")
+        logger.error("Google token is missing email.")
         raise HTTPException(status_code=401, detail="Invalid Google Token: Missing email.")
 
     user = verify_user(email)
@@ -50,8 +50,8 @@ async def google_auth(auth_request: AuthRequestDto):
             f"&scope={' '.join(config['google_oauth']['scopes'])}"
             f"&access_type=offline"
         )
-        log_message("DEBUG", f"User needs to authenticate via Google OAuth.")
-        log_message("INFO", f"User {email} needs to authenticate via Google OAuth.")
+        logger.debug(f"User needs to authenticate via Google OAuth.")
+        logger.info(f"User {email} needs to authenticate via Google OAuth.")
         return {"redirect": True, "oauth_url": oauth_url, "user_id": user.id}
 
     # If credentials exist, proceed with normal login flow
@@ -65,8 +65,8 @@ async def google_callback(request: Request, db: Session = Depends(get_db_session
     """
     # Log incoming request content
     request_body = await request.json()
-    log_message("DEBUG", f"Received Google OAuth callback request.")
-    log_message("INFO", f"Received Google OAuth callback request with content: {request_body}")
+    logger.debug("Received Google OAuth callback request.")
+    logger.info(f"Received Google OAuth callback request with content: {request_body}")
 
     try:
         # Parse JSON data from the incoming request
@@ -75,15 +75,15 @@ async def google_callback(request: Request, db: Session = Depends(get_db_session
         error_message = request_body.get("error")
 
         if error_message:
-            log_message("ERROR", f"Error during Google OAuth callback: {error_message}")
+            logger.error(f"Error during Google OAuth callback: {error_message}")
             raise HTTPException(status_code=500, detail=error_message)
 
         # Exchange authorization code for tokens
         token_response = await get_google_oauth_credentials(auth_code)
-        log_message("DEBUG", "Successfully exchanged authorization code for tokens.")
+        logger.debug("Successfully exchanged authorization code for tokens.")
 
         if "error" in token_response:
-            log_message("ERROR", f"Token exchange error: {token_response['error_description']}")
+            logger.error(f"Token exchange error: {token_response['error_description']}")
             raise HTTPException(status_code=400, detail=token_response["error_description"])
 
         # Extract tokens and calculate expiry
@@ -102,8 +102,8 @@ async def google_callback(request: Request, db: Session = Depends(get_db_session
             detail=f"HTTP error occurred: {http_err.response.text}"
         )
     except ValueError as ve:
-        log_message("ERROR", f"ValueError during Google OAuth callback: {ve}")
+        logger.error(f"ValueError during Google OAuth callback: {ve}")
         raise HTTPException(status_code=404, detail=str(ve))
     except Exception as e:
-        log_message("CRITICAL", f"Unhandled exception during Google OAuth callback: {e}")
+        logger.critical(f"Unhandled exception during Google OAuth callback: {e}")
         raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")

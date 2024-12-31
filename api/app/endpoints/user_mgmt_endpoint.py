@@ -4,7 +4,7 @@ import os
 
 from app.db import get_db_session
 from app.dto import UserCreateDTO
-from app.logging.logging_setup import log_message
+from app.logging.logging_setup import logger
 from app.services.config_mgmt_service import load_config
 from app.repositories.user_mgmt_repository import create_user_in_db
 
@@ -35,11 +35,11 @@ def verify_admin_api_key(admin_api_key: str = Header(...)):
     HTTPException
         403: If the provided API key is invalid.
     """
-    log_message("DEBUG", "Verifying admin API key.")
+    logger.debug("Verifying admin API key.")
     if admin_api_key != ADMIN_API_KEY:
-        log_message("ERROR", "Invalid admin API key provided.")
+        logger.error("Invalid admin API key provided.")
         raise HTTPException(status_code=403, detail="Invalid API key")
-    log_message("DEBUG", "Admin API key verification successful.")
+    logger.debug("Admin API key verification successful.")
 
 @user_mgmt_router.post("", dependencies=[Depends(verify_admin_api_key)])
 def create_user(user_dto: UserCreateDTO, db: Session = Depends(get_db_session)):

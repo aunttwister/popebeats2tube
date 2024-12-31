@@ -29,7 +29,7 @@ from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from app.services.config_mgmt_service import load_config
-from app.logging.logging_setup import log_message
+from app.logging.logging_setup import logger
 
 # Load configuration
 CONFIG = load_config()
@@ -77,7 +77,6 @@ class Schedule(Base):
     image_location = Column(String)
     audio_location = Column(String)
 
-
 class User(Base):
     """
     Represents the 'users' table in the database.
@@ -102,11 +101,11 @@ class User(Base):
 
 # Create tables in the database
 try:
-    log_message("DEBUG", "Creating database tables.")
+    logger.debug("Creating database tables.")
     Base.metadata.create_all(bind=engine)
-    log_message("DEBUG", "Database tables created successfully.")
+    logger.debug("Database tables created successfully.")
 except Exception as e:
-    log_message("ERROR", f"Failed to create database tables: {str(e)}")
+    logger.error(f"Failed to create database tables: {str(e)}")
     raise
 
 
@@ -125,15 +124,15 @@ def get_db_session() -> Generator[Session, None, None]:
 
     Ensures that the session is properly closed after usage.
     """
-    log_message("DEBUG", "Opening a new database session.")
+    logger.debug("Opening a new database session.")
     db = SessionLocal()
     try:
         yield db
-        log_message("DEBUG", "Database session committed successfully.")
+        logger.debug("Database session committed successfully.")
     except Exception as e:
-        log_message("ERROR", f"Database session rollback due to an error: {str(e)}")
+        logger.error(f"Database session rollback due to an error: {str(e)}")
         db.rollback()
         raise
     finally:
         db.close()
-        log_message("DEBUG", "Database session closed.")
+        logger.debug("Database session closed.")

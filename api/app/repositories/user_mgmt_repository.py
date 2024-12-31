@@ -26,7 +26,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from app.db import User, get_db_session
 from app.dto import UserCreateDTO
-from app.logging.logging_setup import log_message
+from app.logging.logging_setup import logger
 
 
 def verify_user(email: str):
@@ -48,17 +48,17 @@ def verify_user(email: str):
     - DEBUG: Indicate the start and end of the verification process.
     - INFO: Include the email being verified (if advanced logging is enabled).
     """
-    log_message("DEBUG", "Starting user verification.")
-    log_message("INFO", f"Verifying user with email: {email}")
+    logger.debug("Starting user verification.")
+    logger.info(f"Verifying user with email: {email}")
 
     db: Session = next(get_db_session())
     try:
         user = db.query(User).filter(User.email == email).first()
         if user:
-            log_message("DEBUG", "User verification successful.")
-            log_message("INFO", f"User found: {email}")
+            logger.debug("User verification successful.")
+            logger.info(f"User found: {email}")
         else:
-            log_message("WARNING", "User verification failed. User not found.")
+            logger.warning("User verification failed. User not found.")
     finally:
         db.close()
 
@@ -96,11 +96,11 @@ def persist_credentials(user_id: str, refresh_token: str, token_expiry: datetime
     - INFO: Include the user ID and email (if advanced logging is enabled).
     - ERROR: Exclude sensitive information (e.g., email or tokens).
     """
-    log_message("DEBUG", f"Persisting credentials for user ID: {user_id}.")
+    logger.debug(f"Persisting credentials for user ID: {user_id}.")
     try:
         user = db.query(User).filter(User.id == user_id).first()
         if not user:
-            log_message("ERROR", "User not found for credential persistence.")
+            logger.error("User not found for credential persistence.")
             raise ValueError(f"User with ID {user_id} not found.")
 
         # Update credentials if missing
@@ -110,12 +110,12 @@ def persist_credentials(user_id: str, refresh_token: str, token_expiry: datetime
             user.token_expiry = token_expiry
 
         db.commit()
-        log_message("DEBUG", f"Credentials persisted successfully for user ID: {user_id}.")
-        log_message("INFO", f"Credentials persisted for user email: {user.email}")
+        logger.debug(f"Credentials persisted successfully for user ID: {user_id}.")
+        logger.info(f"Credentials persisted for user email: {user.email}")
         return user.email
     except Exception as e:
         db.rollback()
-        log_message("ERROR", f"Failed to persist credentials for user ID {user_id}: {str(e)}")
+        logger.error(f"Failed to persist credentials for user ID {user_id}: {str(e)}")
         raise Exception("Unable to persist user credentials. Please check the logs for more details.")
 
 
@@ -146,14 +146,14 @@ def create_user_in_db(user_dto: UserCreateDTO, db: Session) -> dict:
     - INFO: Include the email of the created user (if advanced logging is enabled).
     - ERROR: Exclude sensitive information (e.g., email).
     """
-    log_message("DEBUG", "Starting user creation process.")
-    log_message("INFO", f"Creating user with email: {user_dto.email}")
+    logger.debug("Starting user creation process.")
+    logger.info(f"Creating user with email: {user_dto.email}")
 
     try:
         # Check if user already exists
         existing_user = db.query(User).filter(User.email == user_dto.email).first()
         if existing_user:
-            log_message("ERROR", "User creation failed: Email already exists.")
+            logger.error("User creation failed: Email already exists.")
             raise ValueError("User with this email already exists")
 
         # Create the new user
@@ -169,8 +169,8 @@ def create_user_in_db(user_dto: UserCreateDTO, db: Session) -> dict:
         db.commit()
         db.refresh(new_user)
 
-        log_message("DEBUG", f"User created successfully with ID: {new_user.id}.")
-        log_message("INFO", f"User created: {user_dto.email}")
+        logger.debug(f"User created successfully with ID: {new_user.id}.")
+        logger.info(f"User created: {user_dto.email}")
         return {
             "id": new_user.id,
             "email": new_user.email,
@@ -179,5 +179,5 @@ def create_user_in_db(user_dto: UserCreateDTO, db: Session) -> dict:
         }
     except Exception as e:
         db.rollback()
-        log_message("ERROR", f"Failed to create user: {str(e)}")
+        logger.error(f"Failed to create user: {str(e)}")
         raise Exception("Unable to create user. Please check the logs for more details.")

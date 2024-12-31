@@ -43,7 +43,7 @@ from app.repositories.schedule_mgmt_repository import (
     update_schedule,
     delete_schedule,
 )
-from app.logging.logging_setup import log_message
+from app.logging.logging_setup import logger
 
 schedule_mgmt_router = APIRouter()
 
@@ -68,13 +68,13 @@ async def get_schedules_list(db: Session = Depends(get_db_session)):
     - DEBUG: Start and success of retrieving all schedules.
     - ERROR: Logs failures in schedule retrieval.
     """
-    log_message("DEBUG", "Retrieving all schedules.")
+    logger.debug("Retrieving all schedules.")
     try:
         schedules = await get_schedules(db)
-        log_message("DEBUG", f"Retrieved {len(schedules)} schedules.")
+        logger.debug(f"Retrieved {len(schedules)} schedules.")
         return response_200("Success.", schedules)
     except Exception as e:
-        log_message("ERROR", f"Failed to retrieve schedules: {str(e)}")
+        logger.error(f"Failed to retrieve schedules: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
@@ -101,16 +101,16 @@ async def get_schedule_by_id_route(schedule_id: int, db: Session = Depends(get_d
     - INFO: The ID of the schedule being retrieved.
     - ERROR: Logs failures when the schedule is not found or other issues occur.
     """
-    log_message("DEBUG", f"Retrieving schedule with ID: {schedule_id}.")
+    logger.debug(f"Retrieving schedule with ID: {schedule_id}.")
     try:
         schedule = await get_schedule_by_id(schedule_id, db)
         if not schedule:
-            log_message("ERROR", f"Schedule not found: ID {schedule_id}.")
+            logger.error(f"Schedule not found: ID {schedule_id}.")
             raise HTTPException(status_code=404, detail="Schedule not found")
-        log_message("DEBUG", f"Schedule retrieved: ID {schedule_id}.")
+        logger.debug(f"Schedule retrieved: ID {schedule_id}.")
         return response_200("Success.", schedule)
     except Exception as e:
-        log_message("ERROR", f"Failed to retrieve schedule ID {schedule_id}: {str(e)}")
+        logger.error(f"Failed to retrieve schedule ID {schedule_id}: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
@@ -142,17 +142,17 @@ async def create_schedule_entry(schedule: ScheduleDto, db: Session = Depends(get
     HTTPException
         400: If the upload date is in the past.
     """
-    log_message("DEBUG", f"Creating new schedule: {schedule.video_title}.")
+    logger.debug(f"Creating new schedule: {schedule.video_title}.")
     try:
         if datetime.fromisoformat(schedule.upload_date) < datetime.now():
-            log_message("ERROR", "Upload date is in the past.")
+            logger.error("Upload date is in the past.")
             raise HTTPException(status_code=400, detail="Upload date is in the past")
         result = await create_schedule(schedule, db)
-        log_message("DEBUG", "Schedule creation successful.")
-        log_message("INFO", f"Created schedule: {result.video_title}.")
+        logger.debug("Schedule creation successful.")
+        logger.info(f"Created schedule: {result.video_title}.")
         return response_201("Upload schedule created.", result)
     except Exception as e:
-        log_message("ERROR", f"Failed to create schedule: {str(e)}")
+        logger.error(f"Failed to create schedule: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
@@ -187,20 +187,20 @@ async def update_schedule_entry(schedule_id: int, schedule: ScheduleDto, db: Ses
         400: If the upload date is in the past.
         404: If the schedule is not found.
     """
-    log_message("DEBUG", f"Updating schedule with ID: {schedule_id}.")
+    logger.debug(f"Updating schedule with ID: {schedule_id}.")
     try:
         if datetime.fromisoformat(schedule.upload_date) < datetime.now():
-            log_message("ERROR", "Upload date is in the past.")
+            logger.error("Upload date is in the past.")
             raise HTTPException(status_code=400, detail="Upload date is in the past")
         result = await update_schedule(schedule_id, schedule, db)
         if not result:
-            log_message("ERROR", f"Schedule not found: ID {schedule_id}.")
+            logger.error(f"Schedule not found: ID {schedule_id}.")
             raise HTTPException(status_code=404, detail="Schedule not found")
-        log_message("DEBUG", f"Schedule update successful: ID {schedule_id}.")
-        log_message("INFO", f"Updated schedule: {result.video_title}.")
+        logger.debug(f"Schedule update successful: ID {schedule_id}.")
+        logger.info(f"Updated schedule: {result.video_title}.")
         return response_204("Upload schedule updated.")
     except Exception as e:
-        log_message("ERROR", f"Failed to update schedule ID {schedule_id}: {str(e)}")
+        logger.error(f"Failed to update schedule ID {schedule_id}: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
@@ -231,14 +231,14 @@ async def delete_schedule_entry(schedule_id: int, db: Session = Depends(get_db_s
     HTTPException
         404: If the schedule is not found.
     """
-    log_message("DEBUG", f"Deleting schedule with ID: {schedule_id}.")
+    logger.debug(f"Deleting schedule with ID: {schedule_id}.")
     try:
         result = await delete_schedule(schedule_id, db)
         if not result:
-            log_message("ERROR", f"Schedule not found for deletion: ID {schedule_id}.")
+            logger.error(f"Schedule not found for deletion: ID {schedule_id}.")
             raise HTTPException(status_code=404, detail="Schedule not found")
-        log_message("DEBUG", f"Schedule deletion successful: ID {schedule_id}.")
+        logger.debug(f"Schedule deletion successful: ID {schedule_id}.")
         return response_204("Upload schedule deleted.")
     except Exception as e:
-        log_message("ERROR", f"Failed to delete schedule ID {schedule_id}: {str(e)}")
+        logger.err(f"Failed to delete schedule ID {schedule_id}: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
