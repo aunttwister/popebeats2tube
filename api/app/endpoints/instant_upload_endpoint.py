@@ -22,12 +22,13 @@ Functions:
 - upload_batch(tunes: list[TuneDto]): Handles the upload of a batch of tunes.
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from app.auth_dependencies import get_current_user
 from app.dto import TuneDto
 from app.utils.http_response_util import response_200
 from app.logging.logging_setup import logger
 
-instant_upload_router = APIRouter()
+instant_upload_router = APIRouter(dependencies=[Depends(get_current_user)])
 
 @instant_upload_router.post("/single")
 async def upload_single(tune: TuneDto):

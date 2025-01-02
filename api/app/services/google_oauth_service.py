@@ -90,7 +90,44 @@ async def get_google_oauth_credentials(auth_code: str):
             return response.json()
     except httpx.HTTPStatusError as e:
         logger.error(f"HTTP error during token exchange: {e.response.text}")
+        logger.info(f"Token data: {token_data}")
         raise
     except Exception as e:
         logger.critical(f"Unexpected error during token exchange: {e}")
         raise
+
+async def refresh_google_access_token(refresh_token: str):
+    """
+    Refreshes the Google OAuth access token using the refresh token.
+
+    Args:
+    -----
+    refresh_token : str
+        The refresh token provided during the initial token exchange.
+
+    Returns:
+    --------
+    dict
+        A dictionary containing the new access token and related details.
+
+    Raises:
+    -------
+    httpx.HTTPStatusError
+        If the HTTP request to refresh the token fails.
+    """
+    token_url = TOKEN_URL
+    client_id = GOOGLE_CLIENT_ID
+    client_secret = GOOGLE_CLIENT_SECRET
+
+    data = {
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "refresh_token": refresh_token,
+        "grant_type": "refresh_token",
+    }
+    logger.debug("Initiating access token refresh...")
+    async with httpx.AsyncClient() as client:
+        response = await client.post(token_url, data=data)
+        logger.debug("Access token refresh successful.")
+        response.raise_for_status()
+        return response.json()

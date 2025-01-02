@@ -1,33 +1,9 @@
-"""
-Database Setup and Models with Logging
-======================================
-This module initializes the database connection, defines ORM models, and provides
-utility functions for managing database sessions with logging for operations.
-
-Classes:
---------
-- Schedule: ORM model for the 'schedules' table.
-- User: ORM model for the 'users' table.
-
-Functions:
-----------
-- get_db_session: Dependency function to get a database session with logging.
-
-Constants:
-----------
-- SQLALCHEMY_DATABASE_URL: Connection string for the SQLite database.
-
-Dependencies:
--------------
-- SQLAlchemy: For ORM and database interaction.
-- SQLite: File-based database used for this application.
-- Loguru: For logging database operations.
-"""
 from typing import Generator
 import uuid
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean
+import subprocess
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, ForeignKey, text
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import sessionmaker, Session, relationship
 from app.services.config_mgmt_service import load_config
 from app.logging.logging_setup import logger
 
@@ -36,15 +12,15 @@ CONFIG = load_config()
 DATABASE = CONFIG.get("db", "")
 CONN_STR = DATABASE.get("conn_str", "")
 
-# SQLite file-based database connection URL
+# MySQL database connection URL
 SQLALCHEMY_DATABASE_URL = CONN_STR
 
 # Create a database engine
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False, "timeout": 30},
-    pool_size=5,
-    max_overflow=10,
+    pool_pre_ping=True,  # Helps detect and recycle stale connections
+    pool_size=5,         # Maintain a pool of connections
+    max_overflow=10      # Maximum overflow connections beyond pool size
 )
 
 # Create a configured session factory for the database
@@ -52,7 +28,6 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Declare the base class for ORM models
 Base = declarative_base()
-
 
 class Schedule(Base):
     """
@@ -66,6 +41,8 @@ class Schedule(Base):
     - video_title (str): The title of the video associated with the schedule.
     - image_location (str): The file path to the associated image.
     - audio_location (str): The file path to the associated audio.
+    - user_id (str): Foreign key linking the schedule to a user.
+    - user (User): Relationship with the User table.
     """
     __tablename__ = 'schedules'
 
@@ -73,46 +50,73 @@ class Schedule(Base):
     date_created = Column(DateTime)
     upload_date = Column(DateTime, nullable=True)
     executed = Column(Boolean)
-    video_title = Column(String)
-    image_location = Column(String)
-    audio_location = Column(String)
+    video_title = Column(String(255))
+    image_location = Column(String(512))
+    audio_location = Column(String(512))
+    user_id = Column(String(36), ForeignKey('users.id'))
+
+    user = relationship("User", back_populates="schedules")
 
 class User(Base):
     """
     Represents the 'users' table in the database.
 
     Attributes:
-    - id (int): The primary key and unique identifier for each user.
+    - id (str): The primary key and unique identifier for each user.
     - email (str): The email address of the user. Must be unique.
     - refresh_token (str): The OAuth refresh token for the user.
     - token_expiry (datetime): The expiration time of the access token.
     - date_created (datetime): The date and time when the user record was created.
     - is_active (bool): Indicates whether the user's account is active.
+    - schedules (List[Schedule]): Relationship with the Schedule table.
     """
     __tablename__ = 'users'
 
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()), index=True)
-    email = Column(String, unique=True, nullable=False)
-    refresh_token = Column(String, nullable=True)
-    token_expiry = Column(DateTime, nullable=True)
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()), index=True)
+    email = Column(String(255), unique=True, nullable=False)
+    youtube_access_token = Column(String(512), nullable=True)
+    youtube_refresh_token = Column(String(512), nullable=True)
+    youtube_token_expiry = Column(DateTime, nullable=True)
     date_created = Column(DateTime, nullable=False)
     is_active = Column(Boolean, default=True)
 
+    schedules = relationship("Schedule", back_populates="user")
 
-# Create tables in the database
-try:
-    logger.debug("Creating database tables.")
-    Base.metadata.create_all(bind=engine)
-    logger.debug("Database tables created successfully.")
-except Exception as e:
-    logger.error(f"Failed to create database tables: {str(e)}")
-    raise
+# Initialize database schema using Alembic for migrations
+def init_db():
+    """
+    Initializes the database schema using Alembic migrations.
+    """
+    try:
+        logger.debug("Running Alembic migrations to initialize the database.")
+        subprocess.run(["alembic", "upgrade", "head"], check=True)
+        logger.debug("Database initialized successfully.")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Failed to initialize database via Alembic: {str(e)}")
+        raise
 
+def check_db_version():
+    """
+    Checks the current Alembic migration version in the database.
+
+    Logs:
+    -----
+    - INFO: The current database schema version.
+    - ERROR: If unable to fetch the database version.
+    """
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(text("SELECT version_num FROM alembic_version"))
+            version = result.scalar()
+            logger.info(f"Database schema is at version: {version}")
+    except Exception as e:
+        logger.error(f"Failed to retrieve database version: {str(e)}")
+        raise
 
 def get_db_session() -> Generator[Session, None, None]:
     """
     Dependency function to obtain a database session with logging.
-    
+
     Yields:
     -------
     - SessionLocal: An active database session for performing queries and transactions.

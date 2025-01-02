@@ -13,6 +13,7 @@ from app.endpoints.config_mgmt_endpoint import config_mgmt_router
 from app.endpoints.auth_endpoint import auth_router
 from app.endpoints.instant_upload_endpoint import instant_upload_router
 from app.endpoints.user_mgmt_endpoint import user_mgmt_router
+from app.auth_dependencies import custom_openapi
 from app.services.config_mgmt_service import load_config
 from app.logging.logging_setup import logger
 from app.utils.http_response_util import (
@@ -31,6 +32,12 @@ CONFIG = load_config()
 
 # Create FastAPI app instance
 app = FastAPI()
+
+# Store the original app.openapi method before overriding
+app._original_openapi = app.openapi
+
+# Override the app.openapi with the custom_openapi function
+app.openapi = lambda: custom_openapi(app)
 
 origins = [
     "http://localhost:3000",  # Your React frontend

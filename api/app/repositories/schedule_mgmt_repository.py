@@ -145,6 +145,57 @@ async def create_schedule(schedule: ScheduleDto, db: Session) -> ScheduleDto:
     except Exception as e:
         logger.error(f"Failed to create schedule: {str(e)}")
         raise Exception("Error occurred while creating the schedule.")
+    
+async def create_schedules_in_batch(schedules: List[ScheduleDto], db: Session) -> List[ScheduleDto]:
+    """
+    Create multiple schedules in a single database transaction.
+
+    Args:
+    -----
+    schedules : List[ScheduleDto]
+        The list of schedule details to create.
+    db : Session
+        The database session used for the operation.
+
+    Returns:
+    --------
+    List[ScheduleDto]
+        The list of created schedules mapped to DTO objects.
+
+    Logs:
+    -----
+    - DEBUG: Start and completion of batch schedule creation.
+    - INFO: Details of the created schedules.
+    - ERROR: Failures during the batch operation.
+    """
+    logger.debug(f"Starting batch creation for {len(schedules)} schedules.")
+    created_schedules = []
+    try:
+        for schedule in schedules:
+            image_path = transfer_file(schedule.img, schedule.video_title)
+            audio_path = transfer_file(schedule.audio, schedule.video_title)
+            logger.debug(f"File transfers completed for {schedule.video_title}.")
+
+            new_schedule = Schedule(
+                upload_date=schedule.upload_date,
+                executed=schedule.executed,
+                video_title=schedule.video_title,
+                image_location=image_path,
+                audio_location=audio_path,
+                date_created=datetime.now()
+            )
+            db.add(new_schedule)
+            created_schedules.append(new_schedule)
+
+        db.commit()
+        for schedule in created_schedules:
+            db.refresh(schedule)
+        logger.debug("Batch creation transaction committed successfully.")
+        return [ScheduleDto.model_validate(schedule) for schedule in created_schedules]
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Failed to create schedules in batch: {str(e)}")
+        raise Exception("Error occurred during batch creation of schedules.")
 
 
 async def update_schedule(schedule_id: int, schedule: ScheduleDto, db: Session) -> Optional[ScheduleDto]:

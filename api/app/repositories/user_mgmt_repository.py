@@ -65,7 +65,7 @@ def verify_user(email: str):
     return user
 
 
-def persist_credentials(user_id: str, refresh_token: str, token_expiry: datetime, db: Session) -> str:
+def persist_credentials(user_id: str, youtube_access_token: str, youtube_refresh_token: str, youtube_token_expiry: datetime, db: Session) -> str:
     """
     Update the user's credentials in the database.
 
@@ -104,10 +104,12 @@ def persist_credentials(user_id: str, refresh_token: str, token_expiry: datetime
             raise ValueError(f"User with ID {user_id} not found.")
 
         # Update credentials if missing
-        if not user.refresh_token:
-            user.refresh_token = refresh_token
-        if not user.token_expiry:
-            user.token_expiry = token_expiry
+        if not user.youtube_access_token:
+            user.youtube_access_token = youtube_access_token
+        if not user.youtube_access_token:
+            user.youtube_refresh_token = youtube_refresh_token
+        if not user.youtube_access_token:
+            user.youtube_token_expiry = youtube_token_expiry
 
         db.commit()
         logger.debug(f"Credentials persisted successfully for user ID: {user_id}.")
@@ -159,8 +161,9 @@ def create_user_in_db(user_dto: UserCreateDTO, db: Session) -> dict:
         # Create the new user
         new_user = User(
             email=user_dto.email,
-            refresh_token=None,
-            token_expiry=None,
+            youtube_access_token=None,
+            youtube_refresh_token=None,
+            youtube_token_expiry=None,
             date_created=datetime.now(),
             is_active=True
         )

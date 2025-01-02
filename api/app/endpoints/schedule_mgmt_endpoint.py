@@ -29,6 +29,7 @@ Endpoints:
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
+from app.auth_dependencies import get_current_user
 from app.db import get_db_session
 from app.dto import ScheduleDto
 from app.utils.http_response_util import (
@@ -37,6 +38,7 @@ from app.utils.http_response_util import (
     response_204
 )
 from app.repositories.schedule_mgmt_repository import (
+    create_schedules_in_batch,
     get_schedules,
     get_schedule_by_id,
     create_schedule,
@@ -45,8 +47,7 @@ from app.repositories.schedule_mgmt_repository import (
 )
 from app.logging.logging_setup import logger
 
-schedule_mgmt_router = APIRouter()
-
+schedule_mgmt_router = APIRouter(dependencies=[Depends(get_current_user)])
 
 @schedule_mgmt_router.get("")
 async def get_schedules_list(db: Session = Depends(get_db_session)):
@@ -154,6 +155,55 @@ async def create_schedule_entry(schedule: ScheduleDto, db: Session = Depends(get
     except Exception as e:
         logger.error(f"Failed to create schedule: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
+    
+@schedule_mgmt_router.post("/batch")
+async def create_batch_schedule_entry(
+    schedules: list[ScheduleDto], 
+    db: Session = Depends(get_db_session)
+):
+    """
+    Create multiple schedule entries in a single batch operation.
+
+    Args:
+    -----
+    schedules : List[ScheduleDto]
+        The list of schedule data to create.
+    db : Session
+        The database session used for committing the new schedules.
+
+    Returns:
+    --------
+    dict
+        A dictionary containing the result of the batch operation.
+
+    Logs:
+    -----
+    - DEBUG: Start and success of schedule batch creation.
+    - INFO: The details of the created schedules.
+    - ERROR: Logs failures during batch schedule creation.
+
+    Raises:
+    -------
+    HTTPException
+        400: If any upload date is in the past.
+    """
+    logger.debug(f"Creating batch schedule entries: {len(schedules)} schedules.")
+    try:
+        for schedule in schedules:
+            if datetime.fromisoformat(schedule.upload_date) < datetime.now():
+                logger.error(f"Upload date is in the past for {schedule.video_title}.")
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Upload date is in the past for {schedule.video_title}"
+                )
+        results = await create_schedules_in_batch(schedules, db)
+        logger.debug("Batch schedule creation successful.")
+        logger.info(f"Created schedules: {[schedule.video_title for schedule in schedules]}.")
+        return response_201("Batch upload schedules created successfully.", results)
+    except Exception as e:
+        logger.error(f"Failed to create batch schedules: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
 
 
 @schedule_mgmt_router.put("/{schedule_id}")

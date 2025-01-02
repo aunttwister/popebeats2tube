@@ -24,7 +24,9 @@ Functions:
 """
 
 from datetime import datetime, timedelta, timezone
+from uuid import UUID
 import jwt
+from fastapi import HTTPException
 from app.services.config_mgmt_service import load_config
 from app.logging.logging_setup import logger
 
@@ -36,13 +38,13 @@ ALGORITHM = AUTH.get("algorithm", "")
 JWT_EXPIRATION_TIME = AUTH.get("exp_time", "")
 
 
-def create_jwt(user_id: int) -> str:
+def create_jwt(user_id: UUID) -> str:
     """
     Generates a JWT token for the specified user ID.
 
     Args:
     -----
-    user_id : int
+    user_id : UUID
         The user ID for which the JWT will be generated.
 
     Returns:
@@ -60,22 +62,50 @@ def create_jwt(user_id: int) -> str:
     -------
     Exception
         If token creation fails due to configuration issues or unexpected errors.
-
-    Notes:
-    ------
-    - The token is signed using the `SECRET_KEY` and the algorithm specified in the configuration.
-    - The expiration time is determined by the configuration value `JWT_EXPIRATION_TIME`.
     """
     logger.debug(f"Starting JWT creation for user ID: {user_id}")
 
     try:
+        expiration = datetime.now(timezone.utc) + timedelta(seconds=int(JWT_EXPIRATION_TIME))
         payload = {
-            "user_id": user_id,
-            "exp": datetime.now(timezone.utc) + timedelta(seconds=int(JWT_EXPIRATION_TIME)),
+            "user_id": str(user_id),
+            "exp": expiration,
         }
         token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
         logger.debug(f"JWT created for user ID: {user_id}")
-        return token
+        return {"token": token, "expires_in": JWT_EXPIRATION_TIME}
     except Exception as e:
         logger.error(f"Failed to create JWT: {str(e)}")
         raise Exception("JWT creation failed. Please check the logs for details.")
+
+
+def extract_user_id_from_token(token: str) -> UUID:
+    """
+    Extract user_id from the JWT token.
+
+    Args:
+    -----
+    token : str
+        The JWT token containing user claims.
+
+    Returns:
+    --------
+    UUID
+        The user ID extracted from the token.
+
+    Raises:
+    -------
+    HTTPException
+        401: If the token is invalid or the user_id is not found.
+    """
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("user_id")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid authentication token")
+        return UUID(user_id)
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token has expired")
+    except jwt.JWTError:
+        raise HTTPException(status_code=401, detail="Invalid authentication token")
+
