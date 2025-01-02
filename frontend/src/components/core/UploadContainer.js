@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Box, TextField, Typography } from '@mui/material';
 import { toast } from 'react-toastify';
 import { useDropzone } from 'react-dropzone';
-import config from '../config.json'; // Import the configuration file
+import config from '../../config.json'; // Import the configuration file
 
 function UploadContainer({ onDropAudio, onDropImage, onChange, containerIndex, audioFile, imageFile }) {
   const [title, setTitle] = useState('');
