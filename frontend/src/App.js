@@ -42,7 +42,7 @@ function App() {
         const token = credentialResponse.credential;
         setIsLoading(true);
     
-        fetch('http://localhost:8000/auth/google', {
+        fetch('http://localhost:8000/api/auth/google', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ token }),
@@ -59,7 +59,7 @@ function App() {
                     window.open(oauthUrl, '_self');
                 } else if (data.jwt) {
                     setToken(data.jwt, data.expires_in);
-                    localStorage.setItem('userEmail', data.user_email);
+                    localStorage.setItem('userId', data.user_id);
                     setIsAuthenticated(true);
                     toastHelper.newMessage('success', 'Login Successful', 'You are now authenticated.');
                 } else {

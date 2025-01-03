@@ -1,13 +1,6 @@
-"""
-This module defines the FastAPI application and its routing. It includes the setup
-for schedule management endpoints to create, retrieve, update, and delete schedules.
-
-Modules:
-    - schedule_upload: Handles schedule-related operations (CRUD functionality).
-"""
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.routing import APIRouter
 from app.endpoints.schedule_mgmt_endpoint import schedule_mgmt_router
 from app.endpoints.config_mgmt_endpoint import config_mgmt_router
 from app.endpoints.auth_endpoint import auth_router
@@ -18,11 +11,11 @@ from app.services.config_mgmt_service import load_config
 from app.logging.logging_setup import logger
 from app.utils.http_response_util import (
     not_found_handler,
-    forbidden_handler,    unauthorized_handler,
+    forbidden_handler,
+    unauthorized_handler,
     bad_request_handler,
     internal_server_error_handler
 )
-
 
 # Log application initialization
 logger.debug("Initializing the application...")
@@ -61,12 +54,18 @@ async def add_security_headers(request, call_next):
     response.headers["Cross-Origin-Embedder-Policy"] = "require-corp"
     return response
 
+# Create a root API router with prefix "/api"
+api_router = APIRouter(prefix="/api")
+
 # Include routers
-app.include_router(schedule_mgmt_router, prefix="/schedule-upload", tags=["schedule-upload"])
-app.include_router(config_mgmt_router, prefix="/config-management", tags=["config-management"])
-app.include_router(auth_router, prefix="/auth", tags=["auth"])
-app.include_router(instant_upload_router, prefix="/instant-upload", tags=["instant-upload"])
-app.include_router(user_mgmt_router, prefix="/user-mgmt", tags=["user-mgmt"])
+api_router.include_router(schedule_mgmt_router, prefix="/schedule-upload", tags=["schedule-upload"])
+api_router.include_router(config_mgmt_router, prefix="/config-management", tags=["config-management"])
+api_router.include_router(auth_router, prefix="/auth", tags=["auth"])
+api_router.include_router(instant_upload_router, prefix="/instant-upload", tags=["instant-upload"])
+api_router.include_router(user_mgmt_router, prefix="/user-mgmt", tags=["user-mgmt"])
+
+# Mount the API router
+app.include_router(api_router)
 
 # Register exception handlers
 app.add_exception_handler(404, not_found_handler)

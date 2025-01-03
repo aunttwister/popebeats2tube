@@ -25,7 +25,7 @@ import os
 import shutil
 from fastapi import UploadFile
 from app.services.config_mgmt_service import load_config
-from app.utils.file_path_util import generate_file_path, validate_and_create_path
+from app.utils.file_util import generate_file_path, validate_and_create_path
 import mimetypes
 from app.logging.logging_setup import logger
 
@@ -38,7 +38,7 @@ AUDIO_PATH = FILE_SHARE_CONFIG.get("audio_path", "")
 IMG_PATH = FILE_SHARE_CONFIG.get("img_path", "")
 
 
-def transfer_file(file: UploadFile, user_email: str, video_title: str) -> str:
+def transfer_file(file: UploadFile, user_id: str, video_title: str) -> str:
     """
     Transfer a file to the configured shared path.
 
@@ -67,9 +67,9 @@ def transfer_file(file: UploadFile, user_email: str, video_title: str) -> str:
     ValueError
         If the file_share configuration is invalid.
     """
-    logger.debug(f"Starting file transfer for file: {file.filename}, user: {user_email}.")
+    logger.debug(f"Starting file transfer for file: {file.filename}, user: {user_id}.")
     try:
-        if not IP_ADDR or not BASE_PATH or not AUDIO_PATH or not IMG_PATH:
+        if not IP_ADDR or not BASE_PATH:
             logger.error("File share configuration is invalid.")
             raise ValueError("File share configuration is invalid. Please check 'ip_addr' and 'base_path'.")
 
@@ -78,14 +78,12 @@ def transfer_file(file: UploadFile, user_email: str, video_title: str) -> str:
         logger.debug(f"File type determined: {file_type}.")
 
         # Generate the destination path
-        destination_path = generate_file_path(IP_ADDR, BASE_PATH, user_email, video_title, file_type)
+        destination_path = generate_file_path(IP_ADDR, BASE_PATH, user_id, video_title)
         logger.info(f"Generated destination path: {destination_path}.")
 
         # Ensure the destination directory exists
-        validate_and_create_path(destination_path)
-
-        # Define the destination file path
         destination_file = os.path.join(destination_path, file.filename)
+        validate_and_create_path(destination_file)
 
         # Save the file to the destination
         with open(destination_file, "wb") as f:

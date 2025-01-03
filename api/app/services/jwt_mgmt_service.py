@@ -26,6 +26,7 @@ Functions:
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 import jwt
+from jose import jwt, JWTError, ExpiredSignatureError
 from fastapi import HTTPException
 from app.services.config_mgmt_service import load_config
 from app.logging.logging_setup import logger
@@ -66,7 +67,7 @@ def create_jwt(user_id: UUID) -> str:
     logger.debug(f"Starting JWT creation for user ID: {user_id}")
 
     try:
-        expiration = datetime.now(timezone.utc) + timedelta(seconds=int(JWT_EXPIRATION_TIME))
+        expiration = datetime.now() + timedelta(seconds=int(JWT_EXPIRATION_TIME))
         payload = {
             "user_id": str(user_id),
             "exp": expiration,
@@ -98,14 +99,22 @@ def extract_user_id_from_token(token: str) -> UUID:
     HTTPException
         401: If the token is invalid or the user_id is not found.
     """
+    logger.debug(f"Starting  current user extraction from token.")
+    logger.info(f"Starting  current user extraction from token: {token}")
     try:
+        logger.debug(f"Decoding JWT...")
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        logger.info(f"Decoded JWT: {payload}")
+        logger.debug(f"Extracting user_id...")
         user_id = payload.get("user_id")
+        logger.info(f"Extracted user_id: {user_id}")
+        logger.debug(f"User_id extraction successful.")
+        
         if not user_id:
             raise HTTPException(status_code=401, detail="Invalid authentication token")
         return UUID(user_id)
-    except jwt.ExpiredSignatureError:
+    except ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token has expired")
-    except jwt.JWTError:
+    except JWTError:
         raise HTTPException(status_code=401, detail="Invalid authentication token")
 

@@ -39,7 +39,7 @@ def create_user_in_db(user_dto: UserCreateDTO,
     # Create the new user
     new_user = User(
         email=user_dto.email,
-        date_created=datetime.now(),
+        date_created=datetime.now(timezone.utc),
         is_active=True
     )
     

@@ -26,9 +26,11 @@ Endpoints:
 - `DELETE /schedule-upload/{schedule_id}`: Delete a specific schedule.
 """
 
-from datetime import datetime
-from fastapi import APIRouter, HTTPException, Depends
+from datetime import datetime, timezone
+from math import ceil
+from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy.orm import Session
+from fastapi.encoders import jsonable_encoder
 from app.auth_dependencies import get_current_user
 from app.db import get_db_session
 from app.dto import ScheduleDto
@@ -50,32 +52,49 @@ from app.logging.logging_setup import logger
 schedule_mgmt_router = APIRouter(dependencies=[Depends(get_current_user)])
 
 @schedule_mgmt_router.get("")
-async def get_schedules_list(db: Session = Depends(get_db_session)):
+async def get_schedules_list(
+    db: Session = Depends(get_db_session),
+    current_user_id: str = Depends(get_current_user),
+    page: int = Query(1, ge=1),  # Page number, default 1, must be >= 1
+    limit: int = Query(10, ge=1, le=100),  # Limit, default 10, must be between 1 and 100
+):
     """
-    Retrieve a list of all schedules.
+    Retrieve a paginated list of schedules for the current user.
 
     Args:
     -----
     db : Session
         The database session used for querying.
+    current_user_id : str
+        The ID of the current user extracted from the token.
+    page : int
+        The page number for pagination.
+    limit : int
+        The number of items per page for pagination.
 
     Returns:
     --------
     dict
-        A dictionary containing the list of schedules.
-
-    Logs:
-    -----
-    - DEBUG: Start and success of retrieving all schedules.
-    - ERROR: Logs failures in schedule retrieval.
+        A dictionary containing the paginated list of schedules, current page, and total pages.
     """
-    logger.debug("Retrieving all schedules.")
+    logger.debug(f"Retrieving schedules for user_id: {current_user_id}, page: {page}, limit: {limit}")
     try:
-        schedules = await get_schedules(db)
-        logger.debug(f"Retrieved {len(schedules)} schedules.")
-        return response_200("Success.", schedules)
+        schedules, total_count = await get_schedules(db, str(current_user_id), page, limit)
+        total_pages = ceil(total_count / limit)
+
+        logger.debug(f"Retrieved {len(schedules)} schedules for user_id: {current_user_id}")
+        return response_200(
+            "Success.",
+            "Successfully retrieved schedules.",
+            {
+                "data": jsonable_encoder(schedules),
+                "current_page": page,
+                "total_pages": total_pages,
+                "total_count": total_count,
+            },
+        )
     except Exception as e:
-        logger.error(f"Failed to retrieve schedules: {str(e)}")
+        logger.error(f"Failed to retrieve schedules for user_id {current_user_id}: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
@@ -145,7 +164,7 @@ async def create_schedule_entry(schedule: ScheduleDto, db: Session = Depends(get
     """
     logger.debug(f"Creating new schedule: {schedule.video_title}.")
     try:
-        if datetime.fromisoformat(schedule.upload_date) < datetime.now():
+        if datetime.fromisoformat(schedule.upload_date) < datetime.now(timezone.utc):
             logger.error("Upload date is in the past.")
             raise HTTPException(status_code=400, detail="Upload date is in the past")
         result = await create_schedule(schedule, db)
@@ -159,7 +178,8 @@ async def create_schedule_entry(schedule: ScheduleDto, db: Session = Depends(get
 @schedule_mgmt_router.post("/batch")
 async def create_batch_schedule_entry(
     schedules: list[ScheduleDto], 
-    db: Session = Depends(get_db_session)
+    db: Session = Depends(get_db_session),
+    current_user_id: str = Depends(get_current_user)
 ):
     """
     Create multiple schedule entries in a single batch operation.
@@ -190,16 +210,23 @@ async def create_batch_schedule_entry(
     logger.debug(f"Creating batch schedule entries: {len(schedules)} schedules.")
     try:
         for schedule in schedules:
-            if datetime.fromisoformat(schedule.upload_date) < datetime.now():
+            current_time = datetime.now(timezone.utc)
+            if schedule.upload_date < current_time:
                 logger.error(f"Upload date is in the past for {schedule.video_title}.")
                 raise HTTPException(
                     status_code=400, 
                     detail=f"Upload date is in the past for {schedule.video_title}"
                 )
-        results = await create_schedules_in_batch(schedules, db)
+        results = await create_schedules_in_batch(schedules, str(current_user_id), db)
         logger.debug("Batch schedule creation successful.")
         logger.info(f"Created schedules: {[schedule.video_title for schedule in schedules]}.")
-        return response_201("Batch upload schedules created successfully.", results)
+        
+        to_return = [schedule.model_dump() for schedule in results]
+        return response_201(
+            "Success",
+            "Batch upload schedules created successfully.",
+            jsonable_encoder(to_return)
+        )
     except Exception as e:
         logger.error(f"Failed to create batch schedules: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -239,7 +266,7 @@ async def update_schedule_entry(schedule_id: int, schedule: ScheduleDto, db: Ses
     """
     logger.debug(f"Updating schedule with ID: {schedule_id}.")
     try:
-        if datetime.fromisoformat(schedule.upload_date) < datetime.now():
+        if datetime.fromisoformat(schedule.upload_date) < datetime.now(timezone.utc):
             logger.error("Upload date is in the past.")
             raise HTTPException(status_code=400, detail="Upload date is in the past")
         result = await update_schedule(schedule_id, schedule, db)

@@ -5,6 +5,7 @@ from fastapi import Depends, HTTPException
 import jwt
 from app.services.jwt_mgmt_service import extract_user_id_from_token
 from app.services.config_mgmt_service import load_config
+from app.logging.logging_setup import logger
 
 # Load configuration
 CONFIG = load_config()
@@ -41,11 +42,16 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     HTTPException
         If the token is invalid or expired.
     """
+    logger.debug("Token received.")
+    logger.info(f"Token received: {token}")
+    token = token.replace('Bearer', '').strip()
+    logger.debug("Token stripped.")
+    logger.info(f"Token stripped. Propagating token: {token}...")
     try:
         return extract_user_id_from_token(token)
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token has expired")
-    except jwt.JWTError:
+    except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="Invalid authentication token")
 
 

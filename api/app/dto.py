@@ -11,8 +11,8 @@ Classes:
 
 from typing import Optional
 from fastapi import UploadFile
-from datetime import datetime
-from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
+from datetime import datetime, timezone
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 class UserCreateDTO(BaseModel):
     email: EmailStr
@@ -44,6 +44,17 @@ class TuneDto(BaseModel):
     description: str
     audio_file: str
     image_file: str
+    
+class FileDto(BaseModel):
+    """
+    DTO for a file.
+    
+    Attributes:
+        file (str): The base64-encoded file data.
+        type (str): The file type or extension (e.g., 'png', 'mp3').
+    """
+    file: str
+    type: str
 
 class ScheduleDto(BaseModel):
     """
@@ -58,32 +69,33 @@ class ScheduleDto(BaseModel):
         image_location (str): The file path or file name of the associated image.
         audio_location (str): The file path or file name of the associated audio.
     """
-    id: int
-    date_created: datetime
-    upload_date: Optional[datetime] = None
+    id: Optional[int] = None
+    date_created: Optional[datetime] = None
+    upload_date: datetime
     executed: bool
     video_title: str
-    img: UploadFile
-    audio: UploadFile
-    model_config = ConfigDict(from_attributes=True, str_strip_whitespace = True, str_min_length = 1, use_enum_values = True)
+    img: Optional[FileDto] = Field(default=None)  # Optional for retrieval
+    audio: Optional[FileDto] = Field(default=None)  # Optional for retrieval
+    model_config = ConfigDict(
+        from_attributes=True,
+        str_strip_whitespace = True,
+        str_min_length = 0,
+        use_enum_values = True,
+        json_encoders={
+            datetime: lambda v: v.isoformat(),
+        })
 
     @field_validator('upload_date')
     @classmethod
     def validate_upload_date(cls, v):
         """
-        Ensure that the upload date is in the future.
+        Ensure that the upload date is in the future and is timezone-aware.
         Raises a ValueError if the upload date is in the past.
         """
-        if v and v < datetime.now():
-            raise ValueError("Upload date must be in the future.")
-        return v
-
-    @field_validator('video_title')
-    @classmethod
-    def validate_video_title(cls, v):
-        """
-        Ensure that the video title is not empty and has a reasonable length.
-        """
-        if not v or len(v) > 100:
-            raise ValueError("Video title must not be empty and should be less than 100 characters.")
+        if v:
+            # Make the datetime timezone-aware if it's naive
+            if v.tzinfo is None:
+                v = v.replace(tzinfo=timezone.utc)
+            if v < datetime.now(timezone.utc):
+                raise ValueError("Upload date must be in the future.")
         return v

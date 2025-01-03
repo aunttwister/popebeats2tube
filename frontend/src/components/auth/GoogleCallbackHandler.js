@@ -19,7 +19,7 @@ const GoogleCallbackHandler = ({ setIsAuthenticated }) => {
         }
 
         if (authCode) {
-            fetch('http://localhost:8000/auth/google/callback', {
+            fetch('http://localhost:8000/api/auth/google/callback', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ code: authCode, user_id }),
@@ -28,7 +28,7 @@ const GoogleCallbackHandler = ({ setIsAuthenticated }) => {
                 .then((data) => {
                     if (data.jwt) {
                         setToken(data.jwt, data.expires_in)
-                        localStorage.setItem('userEmail', data.user_email);
+                        localStorage.setItem('userId', data.user_id);
                         setIsAuthenticated(true);
                         navigate('/');
                         toastHelper.newMessage('success', 'Login Successful', 'You are now authenticated.');

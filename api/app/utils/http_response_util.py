@@ -66,7 +66,7 @@ def internal_server_error_handler(request: Request, exc: HTTPException):
 
 # Response Interceptors for Specific 2xx (Success) Status Codes
 
-def response_200(message: str, data: Any = None) -> JSONResponse:
+def response_200(title:str, message: str, data: Any = None) -> JSONResponse:
     """
     Creates a response for 200 OK status code.
     
@@ -77,9 +77,9 @@ def response_200(message: str, data: Any = None) -> JSONResponse:
     Returns:
     - JSONResponse: A standardized 200 OK response.
     """
-    return create_response(200, message, data)
+    return create_response(200, title, message, data)
 
-def response_201(message: str, data: Any = None) -> JSONResponse:
+def response_201(title: str, message: str, data: Any = None) -> JSONResponse:
     """
     Creates a response for 201 Created status code.
     
@@ -90,7 +90,7 @@ def response_201(message: str, data: Any = None) -> JSONResponse:
     Returns:
     - JSONResponse: A standardized 201 Created response.
     """
-    return create_response(201, message, data)
+    return create_response(201, title, message, data)
 
 def response_202(message: str, data: Any = None) -> JSONResponse:
     """

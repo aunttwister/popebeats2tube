@@ -4,6 +4,9 @@ import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import UploadContainer from './UploadContainer';
+import { toast } from 'react-toastify';
+import { createBatchSchedule } from '../../services/scheduleService.ts'
+import { fileConverter } from '../../utils/fileConverter.js'
 
 function ScheduledUpload() {
   const [uploadContainers, setUploadContainers] = useState([
@@ -23,11 +26,43 @@ function ScheduledUpload() {
     setUploadContainers(updatedContainers);
   };
 
-  const handleSubmit = () => {
-    console.log('Scheduled Upload Data:', uploadContainers);
-    // API call logic can go here
+  
+  const handleSubmit = async () => {
+    try {
+      const schedules = await Promise.all(
+        uploadContainers.map(async (container) => {
+          try {
+            const imageBase64 = container.image
+              ? await fileConverter.fileToBase64(container.image)
+              : null;
+            const audioBase64 = container.audio
+              ? await fileConverter.fileToBase64(container.audio)
+              : null;
+            
+            return {
+              video_title: container.title,
+              upload_date: container.uploadDate
+                ? container.uploadDate.toISOString()
+                : null,
+              img: {file: imageBase64, type: container.image.name.split('.').pop() },
+              audio: { file: audioBase64, type: container.audio.name.split('.').pop() },
+              executed: false
+            };
+          } catch (error) {
+            console.error('Error converting file to base64:', error.message);
+            throw error;
+          }
+        })
+      );
+  
+      const response = await createBatchSchedule(schedules);
+      toast.success('Schedules created successfully!');
+      console.log('Batch Schedule Upload Result:', response);
+    } catch (error) {
+      console.error('Error creating schedules:', error);
+      toast.error('Failed to create schedules. Please try again.');
+    }
   };
-
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Box sx={{ padding: 3 }}>

@@ -85,19 +85,24 @@ function DropzoneField({ onDrop, label, file, acceptedFileTypes, maxFileSize, is
     onDrop: (acceptedFiles, fileRejections) => {
       if (fileRejections.length > 0) {
         handleValidationErrors(fileRejections, acceptedFileTypes, maxFileSize);
-        setIsValid(false); // Call the setter to update the valid state
+        setIsValid(false);
         return;
       }
       if (acceptedFiles.length > 0) {
-        onDrop(acceptedFiles.slice(0, 1));
-        setIsValid(true); // Call the setter to update the valid state
+        console.log('Dropped file:', acceptedFiles[0]); // Debugging log
+        onDrop(acceptedFiles.slice(0, 1)); // Pass the first file
+        setIsValid(true);
         toast.success('File attached successfully!');
       }
     },
-    accept: acceptedFileTypes, // Directly use acceptedFileTypes passed in
+    accept: acceptedFileTypes,
     maxFiles: 1,
     maxSize: maxFileSize,
   });
+
+  // Log file details for debugging
+  console.log('Accepted file types:', acceptedFileTypes);
+  console.log('Max file size:', maxFileSize);
 
   // Handle validation errors for rejected files
   const handleValidationErrors = (fileRejections, acceptedFileTypes, maxFileSize) => {

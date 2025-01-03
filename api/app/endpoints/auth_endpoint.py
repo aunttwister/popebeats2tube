@@ -54,7 +54,7 @@ async def google_auth(auth_request: AuthRequestDto):
 
     # If credentials exist, proceed with normal login flow
     jwt_token = create_jwt(user_id=user.id)
-    return {"redirect": False, "jwt": jwt_token["token"], "expires_in": jwt_token["expires_in"], "user_email": user.email}
+    return {"redirect": False, "jwt": jwt_token["token"], "expires_in": jwt_token["expires_in"], "user_id": user.id}
 
 @auth_router.post("/google/callback")
 async def google_callback(request: Request, db: Session = Depends(get_db_session)):
@@ -86,17 +86,17 @@ async def google_callback(request: Request, db: Session = Depends(get_db_session
 
         # Extract tokens and calculate expiry
         access_token = token_response["access_token"]
-        refresh_token = token_response["refresh_token"]
+        refresh_token = token_response.get("refresh_token")
         expires_in = token_response["expires_in"]
-        print(token_response)
+
         token_expiry = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
 
         # Persist credentials in the database
-        email = persist_credentials(user_id, access_token, refresh_token, token_expiry, db)
+        user = persist_credentials(user_id, access_token, refresh_token, token_expiry, db)
         
         jwt = create_jwt(user_id)
 
-        return {"jwt": jwt["token"], "expires_in": jwt["expires_in"], "user_email": email}
+        return {"jwt": jwt["token"], "expires_in": jwt["expires_in"],  "user_id": user.id}
 
     except httpx.HTTPStatusError as http_err:
         raise HTTPException(
@@ -112,30 +112,39 @@ async def google_callback(request: Request, db: Session = Depends(get_db_session
     
 
 @auth_router.post("/token-refresh")
-async def refresh_auth_token(user_email: str, db: Session = Depends(get_db_session)):
+async def refresh_auth_token(request: Request, db: Session = Depends(get_db_session)):
     """
     Refreshes the Google OAuth access token using the refresh token.
     """
+    # Log incoming request content
+    request_body = await request.json()
+    user_email = request_body.get("user_email")
     logger.debug("Starting access token refresh process.")
     logger.info(f"Starting access token refresh process for user {user_email}.")
+    
     user = verify_user(user_email)
-    if not user or not user.refresh_token:
+    if not user or not user.youtube_refresh_token:
         logger.error("Invalid user or missing refresh token.")
         raise HTTPException(status_code=401, detail="Invalid user or missing refresh token.")
 
     try:
-        token_response = await refresh_google_access_token(user.refresh_token)
-        print(token_response)
+        token_response = await refresh_google_access_token(user.youtube_refresh_token)
+        access_token = token_response["access_token"]
+        
+        refresh_token = token_response.get("refresh_token")
+        if refresh_token is None:
+            refresh_token = user.youtube_refresh_token
+        
         new_expiry = datetime.now(timezone.utc) + timedelta(seconds=token_response["expires_in"])
         logger.info(f"Google Api access token refresh successful. New expiry date is {new_expiry}.")
         
         # Update the user's token details in the database
-        persist_credentials(user.id, user.youtube_refresh_token, new_expiry, db)
+        user = persist_credentials(user.id, access_token, refresh_token, new_expiry, db)
 
         # Generate new JWT
         new_jwt = create_jwt(user.id)
 
-        return {"jwt": new_jwt["token"], "expires_in": new_jwt["expires_in"]}
+        return {"jwt": new_jwt["token"], "expires_in": new_jwt["expires_in"],  "user_id": user.id}
     except Exception as e:
         logger.error(f"Failed to refresh token: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to refresh token: {str(e)}")

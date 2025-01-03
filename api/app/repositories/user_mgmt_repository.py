@@ -22,7 +22,7 @@ Functions:
 - create_user_in_db(user_dto: UserCreateDTO, db: Session): Add a new user to the database.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from app.db import User, get_db_session
 from app.dto import UserCreateDTO
@@ -105,16 +105,19 @@ def persist_credentials(user_id: str, youtube_access_token: str, youtube_refresh
 
         # Update credentials if missing
         if not user.youtube_access_token:
+            logger.debug(f"test: {youtube_access_token}")
             user.youtube_access_token = youtube_access_token
-        if not user.youtube_access_token:
+        if not user.youtube_refresh_token:
+            logger.debug(f"test: {youtube_refresh_token}")
             user.youtube_refresh_token = youtube_refresh_token
-        if not user.youtube_access_token:
+        if not user.youtube_token_expiry:
+            logger.debug(f"test: {youtube_token_expiry}")
             user.youtube_token_expiry = youtube_token_expiry
 
         db.commit()
         logger.debug(f"Credentials persisted successfully for user ID: {user_id}.")
         logger.info(f"Credentials persisted for user email: {user.email}")
-        return user.email
+        return user
     except Exception as e:
         db.rollback()
         logger.error(f"Failed to persist credentials for user ID {user_id}: {str(e)}")
@@ -164,7 +167,7 @@ def create_user_in_db(user_dto: UserCreateDTO, db: Session) -> dict:
             youtube_access_token=None,
             youtube_refresh_token=None,
             youtube_token_expiry=None,
-            date_created=datetime.now(),
+            date_created=datetime.now(timezone.utc),
             is_active=True
         )
 

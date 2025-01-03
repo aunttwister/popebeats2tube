@@ -12,7 +12,7 @@ export interface TuneDTO {
     upload_date: string | null; // ISO 8601 format or null
     executed: boolean;
     video_title: string;
-    image_location: string;
-    audio_location: string;
+    image: string | null; // Base64 binary string that represents a file
+    audio: string | null; // Base64 binary string that represents a file
   }
   

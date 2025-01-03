@@ -1,14 +1,15 @@
-export const setToken = (token, expiresIn) => {
+export const setToken = (token, expiresIn, userId) => {
     localStorage.setItem('jwt', token);
     const expiryTime = Date.now() + expiresIn * 1000;
     localStorage.setItem('jwtExpiry', expiryTime);
+    localStorage.setItem('userId', userId)
 };
 
 export const getToken = async () => {
     const token = localStorage.getItem('jwt');
     const expiryTime = parseInt(localStorage.getItem('jwtExpiry'), 10);
 
-    if (Date.now() >= expiryTime) {
+    if (Date.now() >= expiryTime || isNaN(expiryTime)) {
         await refreshToken();
         return localStorage.getItem('jwt');
     } else {
@@ -18,7 +19,7 @@ export const getToken = async () => {
 
 export const refreshToken = async () => {
     const email = localStorage.getItem('userEmail');
-    const response = await fetch('http://localhost:8000/auth/token-refresh', {
+    const response = await fetch('http://localhost:8000/api/auth/token-refresh', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_email: email }),

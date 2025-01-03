@@ -126,8 +126,11 @@ async def refresh_google_access_token(refresh_token: str):
         "grant_type": "refresh_token",
     }
     logger.debug("Initiating access token refresh...")
+    logger.debug(f"Initiating access token refresh with following request: {data}")
     async with httpx.AsyncClient() as client:
         response = await client.post(token_url, data=data)
+        if response.status_code != 200:
+            logger.error(f"Google API error: {response.status_code} - {response.text}")
+            response.raise_for_status()
         logger.debug("Access token refresh successful.")
-        response.raise_for_status()
         return response.json()

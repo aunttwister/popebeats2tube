@@ -3,7 +3,7 @@ Utility functions for handling common operations used across the application.
 
 This module includes functions for date validation and other shared utilities.
 """
-from datetime import datetime
+from datetime import datetime, timezone
 
 def is_past_date(upload_date: str) -> bool:
     """
@@ -21,4 +21,4 @@ def is_past_date(upload_date: str) -> bool:
         >>> is_past_date("2025-01-01T00:00:00")
         False
     """
-    return datetime.fromisoformat(upload_date) < datetime.now()
+    return datetime.fromisoformat(upload_date) < datetime.now(timezone.utc)

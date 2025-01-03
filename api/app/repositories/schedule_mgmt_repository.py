@@ -26,41 +26,56 @@ Functions:
 - delete_schedule: Delete a schedule from the database.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 from sqlalchemy.orm import Session
 from app.db import Schedule
 from app.dto import ScheduleDto
 from app.services.file_transfer_service import transfer_file
 from app.logging.logging_setup import logger
+from app.utils.file_util import base64_to_file
 
 
-async def get_schedules(db: Session) -> List[ScheduleDto]:
+async def get_schedules(db: Session, user_id: str, page: int, limit: int) -> List[ScheduleDto]:
     """
-    Retrieve all schedules from the database.
+    Retrieve paginated schedules for a specific user from the database.
 
     Args:
     -----
     db : Session
         The database session used for querying.
+    user_id : str
+        The ID of the user whose schedules are to be fetched.
+    page : int
+        The page number for pagination.
+    limit : int
+        The number of items per page for pagination.
 
     Returns:
     --------
-    List[ScheduleDto]
-        A list of schedules mapped to DTO objects.
+    Tuple[List[ScheduleDto], int]
+        A tuple containing the paginated list of schedules and the total count of schedules.
 
     Logs:
     -----
-    - DEBUG: Start and completion of fetching all schedules.
+    - DEBUG: Start and completion of fetching schedules for a user.
     - ERROR: Failure during schedule retrieval.
     """
-    logger.debug("Fetching all schedules from the database.")
+    logger.debug(f"Fetching schedules from the database for user_id: {user_id}, page: {page}, limit: {limit}")
     try:
-        schedules = db.query(Schedule).all()
-        logger.debug(f"Fetched {len(schedules)} schedules.")
-        return [ScheduleDto.model_validate(schedule) for schedule in schedules]
+        total_count = db.query(Schedule).filter(Schedule.user_id == user_id).count()
+        schedules = (
+            db.query(Schedule)
+            .filter(Schedule.user_id == user_id)
+            .offset((page - 1) * limit)
+            .limit(limit)
+            .all()
+        )
+
+        logger.debug(f"Fetched {len(schedules)} schedules for user_id: {user_id}")
+        return [ScheduleDto.model_validate(schedule) for schedule in schedules], total_count
     except Exception as e:
-        logger.error(f"Failed to fetch schedules: {str(e)}")
+        logger.error(f"Failed to fetch schedules for user_id {user_id}: {str(e)}")
         raise Exception("Error occurred while fetching schedules.")
 
 
@@ -122,10 +137,13 @@ async def create_schedule(schedule: ScheduleDto, db: Session) -> ScheduleDto:
     - INFO: Details of the created schedule.
     - ERROR: Failures during file transfer or database operations.
     """
-    logger.debug(f"Creating new schedule: {schedule.video_title}.")
+    logger.debug(f"Creating new schedule for video: {schedule.video_title}.")
     try:
-        image_path = transfer_file(schedule.img, schedule.video_title)
-        audio_path = transfer_file(schedule.audio, schedule.video_title)
+        image_file = base64_to_file(schedule.img)
+        image_path = transfer_file(image_file, schedule.video_title)
+        
+        audio_file = base64_to_file(schedule.audio)
+        audio_path = transfer_file(audio_file, schedule.video_title)
         logger.debug("File transfers completed successfully.")
 
         new_schedule = Schedule(
@@ -134,7 +152,7 @@ async def create_schedule(schedule: ScheduleDto, db: Session) -> ScheduleDto:
             video_title=schedule.video_title,
             image_location=image_path,
             audio_location=audio_path,
-            date_created=datetime.now()
+            date_created=datetime.now(timezone.utc)
         )
         db.add(new_schedule)
         db.commit()
@@ -146,7 +164,7 @@ async def create_schedule(schedule: ScheduleDto, db: Session) -> ScheduleDto:
         logger.error(f"Failed to create schedule: {str(e)}")
         raise Exception("Error occurred while creating the schedule.")
     
-async def create_schedules_in_batch(schedules: List[ScheduleDto], db: Session) -> List[ScheduleDto]:
+async def create_schedules_in_batch(schedules: List[ScheduleDto], current_user_id: str, db: Session) -> List[ScheduleDto]:
     """
     Create multiple schedules in a single database transaction.
 
@@ -172,8 +190,11 @@ async def create_schedules_in_batch(schedules: List[ScheduleDto], db: Session) -
     created_schedules = []
     try:
         for schedule in schedules:
-            image_path = transfer_file(schedule.img, schedule.video_title)
-            audio_path = transfer_file(schedule.audio, schedule.video_title)
+            image_file = base64_to_file(schedule.img.file, schedule.video_title + '.' + schedule.img.type)
+            image_path = transfer_file(image_file, current_user_id, schedule.video_title)
+            
+            audio_file = base64_to_file(schedule.audio.file, schedule.video_title + '.' + schedule.audio.type)
+            audio_path = transfer_file(audio_file, current_user_id, schedule.video_title)
             logger.debug(f"File transfers completed for {schedule.video_title}.")
 
             new_schedule = Schedule(
@@ -182,7 +203,8 @@ async def create_schedules_in_batch(schedules: List[ScheduleDto], db: Session) -
                 video_title=schedule.video_title,
                 image_location=image_path,
                 audio_location=audio_path,
-                date_created=datetime.now()
+                date_created=datetime.now(timezone.utc),
+                user_id=current_user_id
             )
             db.add(new_schedule)
             created_schedules.append(new_schedule)
