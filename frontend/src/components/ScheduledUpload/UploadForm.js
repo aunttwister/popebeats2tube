@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, TextField } from '@mui/material';
 import { MobileDateTimePicker } from '@mui/x-date-pickers/MobileDateTimePicker';
-import UploadContainer from '../core/UploadContainer';
+import UploadContainer from '../UploadContainer/UploadContainer';
 
 function UploadForm({ container, index, onUpdate }) {
   return (

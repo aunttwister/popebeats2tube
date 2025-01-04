@@ -1,0 +1,38 @@
+.upload-container {
+    border: 1px solid #ccc;
+    padding: 16px;
+    margin-bottom: 16px;
+    border-radius: 8px;
+  }
+  
+  .tags-container {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+  
+  .radio-group-container {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+    align-items: flex-start;
+  }
+  
+  .radio-group {
+    flex: 1;
+  }
+
+  .dropzone {
+    border: 2px dashed #aaa;
+    padding: 16px;
+    text-align: center;
+    margin-top: 8px;
+    cursor: pointer;
+  }
+  
+  .uploaded-file {
+    margin-top: 8px;
+    color: #333;
+  }
+  

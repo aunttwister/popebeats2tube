@@ -27,7 +27,9 @@ Functions:
 """
 
 from datetime import datetime, timezone
+import json
 from typing import List, Optional, Tuple
+from sqlalchemy import case
 from sqlalchemy.orm import Session
 from app.db import Schedule
 from app.dto import ScheduleDto
@@ -36,10 +38,12 @@ from app.logging.logging_setup import logger
 from app.utils.file_util import base64_to_file
 
 
+
 async def get_schedules(db: Session, user_id: str, page: int, limit: int) -> Tuple[List[ScheduleDto], int]:
     """
-    Retrieve paginated schedules for a specific user from the database, 
-    ordered by the latest upload_date first.
+    Retrieve paginated schedules for a specific user from the database,
+    prioritizing unexecuted schedules ordered by soonest upload_date,
+    then executed schedules.
 
     Args:
     -----
@@ -62,18 +66,32 @@ async def get_schedules(db: Session, user_id: str, page: int, limit: int) -> Tup
         # Fetch total count of schedules for pagination
         total_count = db.query(Schedule).filter(Schedule.user_id == user_id).count()
 
-        # Fetch schedules ordered by upload_date (latest first), paginated
+        # Conditional ordering
         schedules = (
             db.query(Schedule)
             .filter(Schedule.user_id == user_id)
-            .order_by(Schedule.upload_date.desc())  # Order by latest upload_date first
+            .order_by(
+                case(
+                    (Schedule.executed == False, 0), 
+                    (Schedule.executed == True, 1)
+                ),  # Prioritize unexecuted schedules
+                Schedule.upload_date.asc(),  # Order by soonest upload_date within each group
+            )
             .offset((page - 1) * limit)
             .limit(limit)
             .all()
         )
 
         logger.debug(f"Fetched {len(schedules)} schedules for user_id: {user_id}")
-        return [ScheduleDto.model_validate(schedule) for schedule in schedules], total_count
+        return [
+            ScheduleDto.model_validate(
+                {
+                    **schedule.__dict__,
+                    "tags": json.loads(schedule.tags) if schedule.tags else [],
+                }
+            )
+            for schedule in schedules
+        ], total_count
     except Exception as e:
         logger.error(f"Failed to fetch schedules for user_id {user_id}: {str(e)}")
         raise Exception("Error occurred while fetching schedules.")
@@ -208,7 +226,12 @@ async def create_schedules_in_batch(schedules: List[ScheduleDto], current_user_i
                 audio_name=schedule.audio_name,
                 audio_type=schedule.audio_type,
                 date_created=datetime.now(timezone.utc),
-                user_id=current_user_id
+                user_id=current_user_id,
+                privacy_status=schedule.privacy_status,
+                embeddable=schedule.embeddable,
+                license=schedule.license,
+                category=schedule.category,
+                tags=json.dumps(schedule.tags)
             )
             db.add(new_schedule)
             created_schedules.append(new_schedule)
@@ -217,7 +240,15 @@ async def create_schedules_in_batch(schedules: List[ScheduleDto], current_user_i
         for schedule in created_schedules:
             db.refresh(schedule)
         logger.debug("Batch creation transaction committed successfully.")
-        return [ScheduleDto.model_validate(schedule) for schedule in created_schedules]
+        return [
+            ScheduleDto.model_validate(
+                {
+                    **schedule.__dict__,
+                    "tags": json.loads(schedule.tags) if schedule.tags else [],
+                }
+            )
+            for schedule in created_schedules
+        ]
     except Exception as e:
         db.rollback()
         logger.error(f"Failed to create schedules in batch: {str(e)}")

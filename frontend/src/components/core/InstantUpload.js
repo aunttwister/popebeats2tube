@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button, Box, Grid, Typography } from '@mui/material';
-import UploadContainer from './UploadContainer';
+import UploadContainer from '../UploadContainer/UploadContainer';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 

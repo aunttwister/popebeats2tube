@@ -9,16 +9,37 @@ import { toastHelper } from '../../utils/toastHelper';
 
 function ScheduledUpload() {
   const [uploadContainers, setUploadContainers] = useState([
-    { audio: null, image: null, title: '', description: '', uploadDate: null },
+    {
+      audio: null,
+      image: null,
+      title: '',
+      description: '',
+      tags: [],
+      category: '',
+      privacyStatus: 'private',
+      embeddable: false,
+      license: 'youtube',
+      uploadDate: null,
+    },
   ]);
 
   const handleAddContainer = () => {
     setUploadContainers([
       ...uploadContainers,
-      { audio: null, image: null, title: '', description: '', uploadDate: null },
+      {
+        audio: null,
+        image: null,
+        title: '',
+        description: '',
+        tags: [],
+        category: '',
+        privacyStatus: 'private',
+        embeddable: false,
+        license: 'youtube',
+        uploadDate: null,
+      },
     ]);
   };
-
   const handleUpdateContainer = (index, updatedValues) => {
     const updatedContainers = [...uploadContainers];
     updatedContainers[index] = { ...updatedContainers[index], ...updatedValues };
@@ -35,7 +56,7 @@ function ScheduledUpload() {
           const audioBase64 = container.audio
             ? await fileConverter.fileToBase64(container.audio)
             : null;
-
+  
           return {
             video_title: container.title,
             upload_date: container.uploadDate
@@ -47,11 +68,19 @@ function ScheduledUpload() {
             audio_file: audioBase64,
             audio_name: container.audio?.name,
             audio_type: container.audio?.name.split('.').pop(),
+            tags: container.tags || [], // Ensure tags are passed as an array
+            category: container.category || '', // Default empty string
+            privacy_status: container.privacyStatus || 'private', // Default to 'private'
+            embeddable: container.embeddable || false, // Default to false
+            license: container.license || 'youtube', // Default to 'youtube'
+            description: container.description || '', // Map description
             executed: false,
           };
         })
       );
-
+  
+      console.log('Schedules:', schedules);
+  
       const response = await createBatchSchedule(schedules);
       toastHelper.newMessage('success', response.title, response.message);
     } catch (error) {

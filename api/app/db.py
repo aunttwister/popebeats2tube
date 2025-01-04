@@ -32,17 +32,6 @@ Base = declarative_base()
 class Schedule(Base):
     """
     Represents the 'schedules' table in the database.
-
-    Attributes:
-    - id (int): The primary key and unique identifier for each schedule.
-    - date_created (datetime): The date and time when the schedule entry was created.
-    - upload_date (datetime): The date and time when the schedule is set to be executed. Nullable.
-    - executed (bool): Indicates whether the schedule has been executed.
-    - video_title (str): The title of the video associated with the schedule.
-    - image_location (str): The file path to the associated image.
-    - audio_location (str): The file path to the associated audio.
-    - user_id (str): Foreign key linking the schedule to a user.
-    - user (User): Relationship with the User table.
     """
     __tablename__ = 'schedules'
 
@@ -57,6 +46,11 @@ class Schedule(Base):
     audio_location = Column(String(512))
     audio_name = Column(String(255))
     audio_type = Column(String(64))
+    tags = Column(String(1024))  # Store tags as a JSON-encoded string
+    category = Column(String(128))
+    privacy_status = Column(String(32))
+    embeddable = Column(Boolean)
+    license = Column(String(64))
     user_id = Column(String(36), ForeignKey('users.id'))
 
     user = relationship("User", back_populates="schedules")
