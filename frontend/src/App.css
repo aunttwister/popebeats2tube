@@ -53,3 +53,22 @@ body {
   font-size: 14px;
   margin: 0;
 }
+
+.app-content-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Center content vertically */
+  align-items: center; /* Center content horizontally */
+  margin: 0 auto; /* Center horizontally */
+  padding: 20px; /* Add padding around the content */
+  max-width: 1200px; /* Limit the width of the container */
+  box-sizing: border-box; /* Ensure padding is included in width */
+}
+
+body {
+  margin: 0;
+  font-family: 'Rubik', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+  background-color: #f4f4f9; /* Light background */
+  color: #333; /* Default text color */
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+}

@@ -1,0 +1,19 @@
+.authenticated-content-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Centers content vertically */
+    align-items: center; /* Centers content horizontally */
+    margin: 0 auto; /* Center the container horizontally */
+    padding: 20px; /* Add some padding */
+    max-width: 1200px; /* Limit the width of the content */
+    box-sizing: border-box; /* Include padding in width calculation */
+  }
+  
+  body {
+    margin: 0;
+    font-family: 'Rubik', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+    background-color: #f4f4f9; /* Light background */
+    color: #333; /* Default text color */
+    overflow-x: hidden; /* Prevent horizontal scrolling */
+  }
+  

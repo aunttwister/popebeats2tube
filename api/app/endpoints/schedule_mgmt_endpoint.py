@@ -85,7 +85,7 @@ async def get_schedules_list(
         logger.debug(f"Retrieved {len(schedules)} schedules for user_id: {current_user_id}")
         return response_200(
             "Success.",
-            "Successfully retrieved schedules.",
+            "Successfully fetched schedules.",
             {
                 "data": jsonable_encoder(schedules),
                 "current_page": page,

@@ -14,7 +14,6 @@ export const createSchedule = async (schedule: ScheduleDTO): Promise<ScheduleDTO
 };
 
 export const createBatchSchedule = async (schedules: ScheduleDTO[]): Promise<ScheduleDTO[]> => {
-  console.log(schedules)
   const response = await apiClient.post('/schedule-upload/batch', schedules);
   return response.data;
 };

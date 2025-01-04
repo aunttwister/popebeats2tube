@@ -78,7 +78,7 @@ function App() {
     return (
         <>
             <ToastContainer
-                position="top-right"
+                position="bottom-right"
                 autoClose={3000}
                 hideProgressBar={false}
                 newestOnTop
@@ -101,7 +101,7 @@ function App() {
                                     isAuthenticated={isAuthenticated}
                                     selectedTab={selectedTab}
                                     setSelectedTab={setSelectedTab}
-                                />
+                            />
                             }
                         />
                     ) : (

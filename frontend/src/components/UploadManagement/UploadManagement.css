@@ -1,0 +1,59 @@
+@media (max-width: 600px) {
+  .upload-management-table {
+    display: block;
+  }
+
+  .upload-management-table thead {
+    display: none; /* Hide the table headers on mobile */
+  }
+
+  .upload-management-table tbody {
+    display: block;
+  }
+
+  .upload-management-table tbody tr {
+    display: block;
+    margin-bottom: 1rem; /* Add spacing between cards */
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 16px; /* Add padding inside the card */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Add a subtle shadow */
+    background-color: #fff; /* Ensure cards have a white background */
+  }
+
+  .upload-management-table tbody tr td {
+    display: flex;
+    justify-content: space-between; /* Align label and value horizontally */
+    padding: 8px 0; /* Add vertical padding between rows */
+    text-align: left; /* Align text to the left */
+    word-wrap: break-word; /* Handle long text */
+  }
+
+  .upload-management-table tbody tr td::before {
+    content: attr(data-label); /* Use data-label as the header for each field */
+    font-weight: bold; /* Make the label bold */
+    flex: 1;
+    margin-right: 1rem; /* Add spacing between label and value */
+    color: #333; /* Set label text color */
+  }
+
+  .upload-management-buttons {
+    flex-direction: column; /* Stack buttons vertically */
+    align-items: stretch; /* Stretch buttons to fill width */
+    gap: 8px; /* Add spacing between buttons */
+    margin-top: 8px; /* Add space above buttons */
+  }
+
+  .upload-management-button {
+    width: 100%; /* Ensure buttons span the full card width */
+    margin: 0 auto; /* Center buttons */
+  }
+}
+
+.upload-management-pagination {
+  display: flex;
+  justify-content: center; /* Center the pagination horizontally */
+  align-items: center; /* Align pagination vertically */
+  padding: 16px 0; /* Add some vertical spacing */
+  width: 100%; /* Ensure it spans the full width of the table */
+}

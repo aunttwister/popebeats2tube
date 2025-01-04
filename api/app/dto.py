@@ -10,9 +10,9 @@ Classes:
 """
 
 from typing import Optional
-from fastapi import UploadFile
 from datetime import datetime, timezone
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from app.logging.logging_setup import logger
 
 class UserCreateDTO(BaseModel):
     email: EmailStr
@@ -44,17 +44,6 @@ class TuneDto(BaseModel):
     description: str
     audio_file: str
     image_file: str
-    
-class FileDto(BaseModel):
-    """
-    DTO for a file.
-    
-    Attributes:
-        file (str): The base64-encoded file data.
-        type (str): The file type or extension (e.g., 'png', 'mp3').
-    """
-    file: str
-    type: str
 
 class ScheduleDto(BaseModel):
     """
@@ -74,8 +63,12 @@ class ScheduleDto(BaseModel):
     upload_date: datetime
     executed: bool
     video_title: str
-    img: Optional[FileDto] = Field(default=None)  # Optional for retrieval
-    audio: Optional[FileDto] = Field(default=None)  # Optional for retrieval
+    img_file: Optional[str] = Field(default=None)  # Optional for retrieval
+    img_name: str
+    img_type: str
+    audio_file: Optional[str] = Field(default=None)  # Optional for retrieval
+    audio_name: str
+    audio_type: str
     model_config = ConfigDict(
         from_attributes=True,
         str_strip_whitespace = True,
@@ -92,10 +85,16 @@ class ScheduleDto(BaseModel):
         Ensure that the upload date is in the future and is timezone-aware.
         Raises a ValueError if the upload date is in the past.
         """
-        if v:
-            # Make the datetime timezone-aware if it's naive
-            if v.tzinfo is None:
-                v = v.replace(tzinfo=timezone.utc)
-            if v < datetime.now(timezone.utc):
-                raise ValueError("Upload date must be in the future.")
-        return v
+        try:
+            if getattr(cls, 'executed', True):
+                return v
+            if v:
+                # Make the datetime timezone-aware if it's naive
+                if v.tzinfo is None:
+                    v = v.replace(tzinfo=timezone.utc)
+                if v < datetime.now(timezone.utc):
+                    raise ValueError("Upload date must be in the future.")
+            return v
+        except Exception as e:
+            logger.error(f"Validation error in upload_date: {e}")
+            raise

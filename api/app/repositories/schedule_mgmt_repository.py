@@ -27,7 +27,7 @@ Functions:
 """
 
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from sqlalchemy.orm import Session
 from app.db import Schedule
 from app.dto import ScheduleDto
@@ -36,9 +36,10 @@ from app.logging.logging_setup import logger
 from app.utils.file_util import base64_to_file
 
 
-async def get_schedules(db: Session, user_id: str, page: int, limit: int) -> List[ScheduleDto]:
+async def get_schedules(db: Session, user_id: str, page: int, limit: int) -> Tuple[List[ScheduleDto], int]:
     """
-    Retrieve paginated schedules for a specific user from the database.
+    Retrieve paginated schedules for a specific user from the database, 
+    ordered by the latest upload_date first.
 
     Args:
     -----
@@ -55,18 +56,17 @@ async def get_schedules(db: Session, user_id: str, page: int, limit: int) -> Lis
     --------
     Tuple[List[ScheduleDto], int]
         A tuple containing the paginated list of schedules and the total count of schedules.
-
-    Logs:
-    -----
-    - DEBUG: Start and completion of fetching schedules for a user.
-    - ERROR: Failure during schedule retrieval.
     """
     logger.debug(f"Fetching schedules from the database for user_id: {user_id}, page: {page}, limit: {limit}")
     try:
+        # Fetch total count of schedules for pagination
         total_count = db.query(Schedule).filter(Schedule.user_id == user_id).count()
+
+        # Fetch schedules ordered by upload_date (latest first), paginated
         schedules = (
             db.query(Schedule)
             .filter(Schedule.user_id == user_id)
+            .order_by(Schedule.upload_date.desc())  # Order by latest upload_date first
             .offset((page - 1) * limit)
             .limit(limit)
             .all()
@@ -190,10 +190,10 @@ async def create_schedules_in_batch(schedules: List[ScheduleDto], current_user_i
     created_schedules = []
     try:
         for schedule in schedules:
-            image_file = base64_to_file(schedule.img.file, schedule.video_title + '.' + schedule.img.type)
+            image_file = base64_to_file(schedule.img_file, schedule.video_title + '.' + schedule.img_type)
             image_path = transfer_file(image_file, current_user_id, schedule.video_title)
             
-            audio_file = base64_to_file(schedule.audio.file, schedule.video_title + '.' + schedule.audio.type)
+            audio_file = base64_to_file(schedule.audio_file, schedule.video_title + '.' + schedule.audio_type)
             audio_path = transfer_file(audio_file, current_user_id, schedule.video_title)
             logger.debug(f"File transfers completed for {schedule.video_title}.")
 
@@ -201,8 +201,12 @@ async def create_schedules_in_batch(schedules: List[ScheduleDto], current_user_i
                 upload_date=schedule.upload_date,
                 executed=schedule.executed,
                 video_title=schedule.video_title,
-                image_location=image_path,
+                img_location=image_path,
+                img_name=schedule.img_name,
+                img_type=schedule.img_type,
                 audio_location=audio_path,
+                audio_name=schedule.audio_name,
+                audio_type=schedule.audio_type,
                 date_created=datetime.now(timezone.utc),
                 user_id=current_user_id
             )

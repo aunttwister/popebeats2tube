@@ -51,8 +51,12 @@ class Schedule(Base):
     upload_date = Column(DateTime, nullable=True)
     executed = Column(Boolean)
     video_title = Column(String(255))
-    image_location = Column(String(512))
+    img_location = Column(String(512))
+    img_name = Column(String(255))
+    img_type = Column(String(64))
     audio_location = Column(String(512))
+    audio_name = Column(String(255))
+    audio_type = Column(String(64))
     user_id = Column(String(36), ForeignKey('users.id'))
 
     user = relationship("User", back_populates="schedules")

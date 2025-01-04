@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box, TextField, Typography } from '@mui/material';
-import { toast } from 'react-toastify';
+import { toastHelper } from '../../utils/toastHelper';
 import { useDropzone } from 'react-dropzone';
 import config from '../../config.json'; // Import the configuration file
 
@@ -89,20 +89,15 @@ function DropzoneField({ onDrop, label, file, acceptedFileTypes, maxFileSize, is
         return;
       }
       if (acceptedFiles.length > 0) {
-        console.log('Dropped file:', acceptedFiles[0]); // Debugging log
         onDrop(acceptedFiles.slice(0, 1)); // Pass the first file
         setIsValid(true);
-        toast.success('File attached successfully!');
+        toastHelper.newMessage('success', 'Success.', 'File attached successfully!');
       }
     },
     accept: acceptedFileTypes,
     maxFiles: 1,
     maxSize: maxFileSize,
   });
-
-  // Log file details for debugging
-  console.log('Accepted file types:', acceptedFileTypes);
-  console.log('Max file size:', maxFileSize);
 
   // Handle validation errors for rejected files
   const handleValidationErrors = (fileRejections, acceptedFileTypes, maxFileSize) => {
@@ -111,9 +106,9 @@ function DropzoneField({ onDrop, label, file, acceptedFileTypes, maxFileSize, is
         if (error.code === 'file-invalid-type') {
           // Extract the file types from the values to display in the error
           const acceptedTypes = Object.values(acceptedFileTypes).join(', ');
-          toast.error(`Invalid file format. Accepted file types: ${acceptedTypes}`);
+          toastHelper.newMessage('error', 'Validation error.', `Invalid file format. Accepted file types: ${acceptedTypes}`);
         } else if (error.code === 'file-too-large') {
-          toast.error(`File size exceeds the allowed limit of ${maxFileSize / 1048576} MB.`);
+          toastHelper.newMessage('error', 'Validation error.', `File size exceeds the allowed limit of ${maxFileSize / 1048576} MB.`);
         }
       });
     });
