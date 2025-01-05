@@ -18,7 +18,7 @@ function UploadForm({ container, index, onUpdate }) {
         label="Upload Date and Time"
         value={container.uploadDate}
         onChange={(date) => onUpdate(index, { uploadDate: date })}
-        renderInput={(params) => (
+        textField={(params) => (
           <TextField {...params} fullWidth margin="normal" />
         )}
       />

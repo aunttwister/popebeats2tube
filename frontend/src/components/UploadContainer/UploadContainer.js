@@ -44,9 +44,11 @@ function UploadContainer({ onDropAudio, onDropImage, onChange, containerIndex, a
       setCategories(mockCategories);
     };
     fetchCategories();
-
-    // Update parent whenever any field changes
-    onChange(containerIndex, {
+  }, []); // Runs only once when the component mounts
+  
+  useEffect(() => {
+    // Avoid infinite updates by checking for changes
+    const currentData = {
       title,
       description,
       tags,
@@ -56,8 +58,18 @@ function UploadContainer({ onDropAudio, onDropImage, onChange, containerIndex, a
       license,
       audio: audioFile,
       image: imageFile,
-    });
-  }, [title, description, tags, category, privacyStatus, embeddable, license, audioFile, imageFile]);
+    };
+  
+    const hasChanged = JSON.stringify(currentData) !== JSON.stringify(previousDataRef.current);
+  
+    if (hasChanged) {
+      previousDataRef.current = currentData; // Update the reference
+      onChange(containerIndex, currentData);
+    }
+  }, [title, description, tags, category, privacyStatus, embeddable, license, audioFile, imageFile, containerIndex, onChange]);
+  
+  // Use a ref to store the previous data to avoid unnecessary calls
+  const previousDataRef = React.useRef({});
 
   const handleTitleChange = (e) => {
     const newTitle = e.target.value;

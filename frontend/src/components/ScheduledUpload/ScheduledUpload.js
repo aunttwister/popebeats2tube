@@ -73,7 +73,7 @@ function ScheduledUpload() {
             privacy_status: container.privacyStatus || 'private', // Default to 'private'
             embeddable: container.embeddable || false, // Default to false
             license: container.license || 'youtube', // Default to 'youtube'
-            description: container.description || '', // Map description
+            video_description: container.description || '', // Map description
             executed: false,
           };
         })

@@ -159,7 +159,7 @@ function EditModal({ open, onClose, onSave, editFormData, setEditFormData }) {
             label="Upload Date and Time"
             value={editFormData.upload_date || null}
             onChange={(date) => setEditFormData({ ...editFormData, upload_date: date })}
-            renderInput={(params) => <TextField {...params} fullWidth margin="normal" />}
+            textField={(params) => <TextField {...params} fullWidth margin="normal" />}
           />
         </DialogContent>
         <DialogActions>

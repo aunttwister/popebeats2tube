@@ -235,7 +235,7 @@ async def delete_schedule_entry(schedule_id: int, db: Session = Depends(get_db_s
             logger.error(f"Schedule not found for deletion: ID {schedule_id}.")
             raise HTTPException(status_code=404, detail="Schedule not found")
         logger.debug(f"Schedule deletion successful: ID {schedule_id}.")
-        return response_204("Upload schedule deleted.")
+        return response_204()
     except Exception as e:
-        logger.err(f"Failed to delete schedule ID {schedule_id}: {str(e)}")
+        logger.error(f"Failed to delete schedule ID {schedule_id}: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")

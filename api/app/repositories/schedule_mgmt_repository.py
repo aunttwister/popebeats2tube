@@ -28,14 +28,15 @@ Functions:
 
 from datetime import datetime, timezone
 import json
+from random import Random, random
 from typing import List, Optional, Tuple
 from sqlalchemy import case
 from sqlalchemy.orm import Session
 from app.db import Schedule
 from app.dto import ScheduleDto
-from app.services.file_transfer_service import transfer_file
+from app.services.file_transfer_service import transfer_files
 from app.logging.logging_setup import logger
-from app.utils.file_util import base64_to_file
+from app.utils.file_util import base64_to_file, delete_directory
 
 
 
@@ -123,20 +124,19 @@ async def create_schedules_in_batch(schedules: List[ScheduleDto], current_user_i
     try:
         for schedule in schedules:
             image_file = base64_to_file(schedule.img_file, schedule.video_title + '.' + schedule.img_type)
-            image_path = transfer_file(image_file, current_user_id, schedule.video_title)
-            
             audio_file = base64_to_file(schedule.audio_file, schedule.video_title + '.' + schedule.audio_type)
-            audio_path = transfer_file(audio_file, current_user_id, schedule.video_title)
+            
+            base_destination_path = transfer_files([image_file, audio_file], current_user_id, schedule.video_title)
+            
             logger.debug(f"File transfers completed for {schedule.video_title}.")
 
             new_schedule = Schedule(
                 upload_date=schedule.upload_date,
                 executed=schedule.executed,
                 video_title=schedule.video_title,
-                img_location=image_path,
+                base_dest_path=base_destination_path,
                 img_name=schedule.img_name,
                 img_type=schedule.img_type,
-                audio_location=audio_path,
                 audio_name=schedule.audio_name,
                 audio_type=schedule.audio_type,
                 date_created=datetime.now(timezone.utc),
@@ -145,7 +145,8 @@ async def create_schedules_in_batch(schedules: List[ScheduleDto], current_user_i
                 embeddable=schedule.embeddable,
                 license=schedule.license,
                 category=schedule.category,
-                tags=json.dumps(schedule.tags)
+                tags=json.dumps(schedule.tags),
+                video_description=schedule.video_description
             )
             db.add(new_schedule)
             created_schedules.append(new_schedule)
@@ -220,8 +221,7 @@ async def update_schedule(schedule_id: int, schedule: ScheduleDto, db: Session) 
         logger.info(f"Updated schedule: {existing_schedule.video_title}.")
         return ScheduleDto.model_validate(
                 {
-                    **schedule.__dict__,
-                    "tags": json.loads(schedule.tags) if schedule.tags else [],
+                    **schedule.__dict__
                 }
             )
 
@@ -232,9 +232,10 @@ async def update_schedule(schedule_id: int, schedule: ScheduleDto, db: Session) 
 
 
 
+# Function to delete a schedule and its files
 async def delete_schedule(schedule_id: int, db: Session) -> bool:
     """
-    Delete a schedule from the database.
+    Delete a schedule from the database and its associated files.
 
     Args:
     -----
@@ -246,11 +247,12 @@ async def delete_schedule(schedule_id: int, db: Session) -> bool:
     Returns:
     --------
     bool
-        True if the schedule was deleted, otherwise False.
+        True if the schedule and its files were deleted, otherwise False.
 
     Logs:
     -----
     - DEBUG: Start and success of schedule deletion.
+    - INFO: Details of the deleted schedule and files.
     - ERROR: Failures during schedule deletion.
     """
     logger.debug(f"Deleting schedule with ID: {schedule_id}.")
@@ -260,10 +262,13 @@ async def delete_schedule(schedule_id: int, db: Session) -> bool:
             logger.debug(f"Schedule not found for deletion: ID {schedule_id}.")
             return False
 
+        delete_directory(schedule.base_dest_path)
+
         db.delete(schedule)
         db.commit()
         logger.debug(f"Schedule ID {schedule_id} deleted successfully.")
         return True
     except Exception as e:
+        db.rollback()
         logger.error(f"Failed to delete schedule ID {schedule_id}: {str(e)}")
         raise Exception("Error occurred while deleting the schedule.")

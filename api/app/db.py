@@ -40,10 +40,9 @@ class Schedule(Base):
     upload_date = Column(DateTime, nullable=True)
     executed = Column(Boolean)
     video_title = Column(String(255))
-    img_location = Column(String(512))
+    base_dest_path = Column(String(512))
     img_name = Column(String(255))
     img_type = Column(String(64))
-    audio_location = Column(String(512))
     audio_name = Column(String(255))
     audio_type = Column(String(64))
     tags = Column(String(1024))  # Store tags as a JSON-encoded string

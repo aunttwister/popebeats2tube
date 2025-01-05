@@ -76,3 +76,30 @@ class ScheduleDto(BaseModel):
             datetime: lambda v: v.isoformat(),
         }
     )
+    @field_validator('upload_date')
+    @classmethod
+    def validate_upload_date(cls, value):
+        """
+        Ensure that the upload date is timezone-aware.
+        Raises a ValueError if the upload date is invalid.
+        """
+        try:
+            if isinstance(value, str):
+                # Parse string to datetime if needed
+                value = datetime.fromisoformat(value)
+            if value.tzinfo is None:
+                # Make the datetime timezone-aware if it's naive
+                value = value.replace(tzinfo=timezone.utc)
+            return value
+        except Exception as e:
+            raise ValueError(f"Invalid upload_date: {value}. Error: {e}")
+
+    @field_validator('tags')
+    @classmethod
+    def validate_tags(cls, value):
+        """
+        Ensure that tags are always a list.
+        """
+        if not isinstance(value, list):
+            raise ValueError("Tags must be a list.")
+        return value

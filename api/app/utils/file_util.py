@@ -1,6 +1,7 @@
 import base64
 import io
 import os
+import shutil
 from app.logging.logging_setup import logger
 
 from fastapi import UploadFile
@@ -51,8 +52,25 @@ def generate_file_path(
 
     return file_path
 
+# Function to check if a directory exists
+def directory_exists(path: str) -> bool:
+    """
+    Check if a directory exists.
 
-def validate_and_create_path(path: str) -> None:
+    Args:
+    -----
+    path : str
+        The path to check.
+
+    Returns:
+    --------
+    bool
+        True if the directory exists, False otherwise.
+    """
+    return os.path.exists(path) and os.path.isdir(path)
+
+# Function to validate and create path
+def validate_and_create_path(path: str) -> str:
     """
     Validate the file path and create directories if they do not exist.
 
@@ -66,9 +84,49 @@ def validate_and_create_path(path: str) -> None:
     OSError
         If the path is invalid or cannot be created.
     """
-    print(path)
-    directory = os.path.dirname(path)
-    os.makedirs(directory, exist_ok=True)
+    directory = path
+    logger.debug(f"Validating path: {path}")
+
+    # Ensure unique directory
+    if directory_exists(directory):
+        logger.info(f"Directory '{directory}' already exists. Generating a unique directory.")
+        counter = 1
+        new_directory = f"{directory}_{counter}"
+        while directory_exists(new_directory):
+            counter += 1
+            new_directory = f"{directory}_{counter}"
+            logger.debug(f"Checking if directory '{new_directory}' exists.")
+        directory = new_directory
+        logger.info(f"Unique directory created: {directory}")
+
+    try:
+        os.makedirs(directory, exist_ok=True)
+        logger.debug(f"Directory '{directory}' created successfully.")
+        return directory
+    except OSError as e:
+        logger.error(f"Failed to create directory '{directory}': {str(e)}")
+        raise
+# Function to delete a directory and its contents
+def delete_directory(path: str) -> None:
+    """
+    Delete a directory and its contents.
+
+    Args:
+    -----
+    path : str
+        The directory path to delete.
+
+    Raises:
+    -------
+    Exception
+        If the directory does not exist or cannot be deleted.
+    """
+    if os.path.exists(path) and os.path.isdir(path):
+        shutil.rmtree(path)
+        logger.info(f"Deleted directory and contents: {path}.")
+    else:
+        logger.error(f"Directory not found for deletion: {path}.")
+        raise Exception(f"Directory not found: {path}. Deletion aborted to prevent orphaned files.")
     
 def base64_to_file(base64_string: str, filename: str) -> UploadFile:
     """
