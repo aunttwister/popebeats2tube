@@ -42,8 +42,6 @@ from app.utils.http_response_util import (
 from app.repositories.schedule_mgmt_repository import (
     create_schedules_in_batch,
     get_schedules,
-    get_schedule_by_id,
-    create_schedule,
     update_schedule,
     delete_schedule,
 )
@@ -95,84 +93,6 @@ async def get_schedules_list(
         )
     except Exception as e:
         logger.error(f"Failed to retrieve schedules for user_id {current_user_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
-
-
-@schedule_mgmt_router.get("/{schedule_id}")
-async def get_schedule_by_id_route(schedule_id: int, db: Session = Depends(get_db_session)):
-    """
-    Retrieve a specific schedule by its ID.
-
-    Args:
-    -----
-    schedule_id : int
-        The ID of the schedule to retrieve.
-    db : Session
-        The database session used for querying.
-
-    Returns:
-    --------
-    dict
-        A dictionary containing the schedule.
-
-    Logs:
-    -----
-    - DEBUG: Start and success of schedule retrieval.
-    - INFO: The ID of the schedule being retrieved.
-    - ERROR: Logs failures when the schedule is not found or other issues occur.
-    """
-    logger.debug(f"Retrieving schedule with ID: {schedule_id}.")
-    try:
-        schedule = await get_schedule_by_id(schedule_id, db)
-        if not schedule:
-            logger.error(f"Schedule not found: ID {schedule_id}.")
-            raise HTTPException(status_code=404, detail="Schedule not found")
-        logger.debug(f"Schedule retrieved: ID {schedule_id}.")
-        return response_200("Success.", schedule)
-    except Exception as e:
-        logger.error(f"Failed to retrieve schedule ID {schedule_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
-
-
-@schedule_mgmt_router.post("")
-async def create_schedule_entry(schedule: ScheduleDto, db: Session = Depends(get_db_session)):
-    """
-    Create a new schedule entry.
-
-    Args:
-    -----
-    schedule : ScheduleDto
-        The schedule data to create.
-    db : Session
-        The database session used for committing the new schedule.
-
-    Returns:
-    --------
-    dict
-        A dictionary containing the creation result and the new schedule.
-
-    Logs:
-    -----
-    - DEBUG: Start and success of schedule creation.
-    - INFO: The details of the created schedule.
-    - ERROR: Logs failures during schedule creation.
-
-    Raises:
-    -------
-    HTTPException
-        400: If the upload date is in the past.
-    """
-    logger.debug(f"Creating new schedule: {schedule.video_title}.")
-    try:
-        if datetime.fromisoformat(schedule.upload_date) < datetime.now(timezone.utc):
-            logger.error("Upload date is in the past.")
-            raise HTTPException(status_code=400, detail="Upload date is in the past")
-        result = await create_schedule(schedule, db)
-        logger.debug("Schedule creation successful.")
-        logger.info(f"Created schedule: {result.video_title}.")
-        return response_201("Upload schedule created.", result)
-    except Exception as e:
-        logger.error(f"Failed to create schedule: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
     
 @schedule_mgmt_router.post("/batch")
@@ -266,7 +186,7 @@ async def update_schedule_entry(schedule_id: int, schedule: ScheduleDto, db: Ses
     """
     logger.debug(f"Updating schedule with ID: {schedule_id}.")
     try:
-        if datetime.fromisoformat(schedule.upload_date) < datetime.now(timezone.utc):
+        if schedule.upload_date < datetime.now(timezone.utc):
             logger.error("Upload date is in the past.")
             raise HTTPException(status_code=400, detail="Upload date is in the past")
         result = await update_schedule(schedule_id, schedule, db)
@@ -275,7 +195,7 @@ async def update_schedule_entry(schedule_id: int, schedule: ScheduleDto, db: Ses
             raise HTTPException(status_code=404, detail="Schedule not found")
         logger.debug(f"Schedule update successful: ID {schedule_id}.")
         logger.info(f"Updated schedule: {result.video_title}.")
-        return response_204("Upload schedule updated.")
+        return response_204()
     except Exception as e:
         logger.error(f"Failed to update schedule ID {schedule_id}: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")

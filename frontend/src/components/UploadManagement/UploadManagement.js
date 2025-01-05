@@ -29,7 +29,6 @@ function UploadManagement() {
       setTotalPages(response.data.total_pages || 1);
       toastHelper.newMessage('success', response.title, response.message)
     } catch (err) {
-      setError('Failed to load schedules.');
       toastHelper.newMessage('error', err.title, err.message)
     } finally {
       setLoading(false);
@@ -54,7 +53,7 @@ function UploadManagement() {
         setUploads(uploads.filter((u) => u.id !== selectedUpload.id));
       }
     } catch (err) {
-      setError('Failed to delete the schedule.');
+      toastHelper.newMessage('error', err.title, err.detail)
     } finally {
       setDeleteModalOpen(false);
     }
@@ -63,8 +62,14 @@ function UploadManagement() {
   const handleEditClick = (upload) => {
     setSelectedUpload(upload);
     setEditFormData({
-      video_title: upload.video_title,
-      upload_date: dayjs(upload.upload_date),
+      video_title: upload.video_title || '',
+      video_description: upload.video_description || '', // Ensure description is passed
+      upload_date: dayjs(upload.upload_date), // Convert to dayjs object
+      tags: Array.isArray(upload.tags) ? upload.tags : JSON.parse(upload.tags || '[]'), // Ensure tags is an array
+      category: upload.category || '', // Pass category
+      privacy_status: upload.privacy_status || 'private', // Default to 'private'
+      license: upload.license || 'youtube', // Default to 'youtube'
+      embeddable: upload.embeddable || false, // Default to false
     });
     setEditModalOpen(true);
   };
@@ -79,7 +84,7 @@ function UploadManagement() {
         );
       }
     } catch (err) {
-      setError('Failed to update the schedule.');
+      toastHelper.newMessage('error', err.title, err.message)
     } finally {
       setEditModalOpen(false);
     }

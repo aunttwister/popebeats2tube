@@ -95,92 +95,6 @@ async def get_schedules(db: Session, user_id: str, page: int, limit: int) -> Tup
     except Exception as e:
         logger.error(f"Failed to fetch schedules for user_id {user_id}: {str(e)}")
         raise Exception("Error occurred while fetching schedules.")
-
-
-async def get_schedule_by_id(schedule_id: int, db: Session) -> Optional[ScheduleDto]:
-    """
-    Retrieve a specific schedule by its ID.
-
-    Args:
-    -----
-    schedule_id : int
-        The ID of the schedule to retrieve.
-    db : Session
-        The database session used for querying.
-
-    Returns:
-    --------
-    Optional[ScheduleDto]
-        The schedule mapped to a DTO object if found, otherwise None.
-
-    Logs:
-    -----
-    - DEBUG: Start and success of fetching the schedule.
-    - INFO: The schedule ID being queried.
-    - ERROR: Failure to find or retrieve the schedule.
-    """
-    logger.debug(f"Fetching schedule with ID: {schedule_id}.")
-    try:
-        schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
-        if schedule:
-            logger.debug(f"Schedule found: ID {schedule_id}.")
-            logger.info(f"Schedule details: {schedule}.")
-            return ScheduleDto.model_validate(schedule)
-        logger.debug(f"Schedule not found: ID {schedule_id}.")
-        return None
-    except Exception as e:
-        logger.error(f"Error fetching schedule ID {schedule_id}: {str(e)}")
-        raise Exception("Error occurred while fetching schedule details.")
-
-
-async def create_schedule(schedule: ScheduleDto, db: Session) -> ScheduleDto:
-    """
-    Create a new schedule and handle associated file transfers.
-
-    Args:
-    -----
-    schedule : ScheduleDto
-        The details of the schedule to create.
-    db : Session
-        The database session used for the operation.
-
-    Returns:
-    --------
-    ScheduleDto
-        The created schedule mapped to a DTO object.
-
-    Logs:
-    -----
-    - DEBUG: Start, file transfer steps, and successful completion.
-    - INFO: Details of the created schedule.
-    - ERROR: Failures during file transfer or database operations.
-    """
-    logger.debug(f"Creating new schedule for video: {schedule.video_title}.")
-    try:
-        image_file = base64_to_file(schedule.img)
-        image_path = transfer_file(image_file, schedule.video_title)
-        
-        audio_file = base64_to_file(schedule.audio)
-        audio_path = transfer_file(audio_file, schedule.video_title)
-        logger.debug("File transfers completed successfully.")
-
-        new_schedule = Schedule(
-            upload_date=schedule.upload_date,
-            executed=schedule.executed,
-            video_title=schedule.video_title,
-            image_location=image_path,
-            audio_location=audio_path,
-            date_created=datetime.now(timezone.utc)
-        )
-        db.add(new_schedule)
-        db.commit()
-        db.refresh(new_schedule)
-        logger.debug("New schedule added to the database.")
-        logger.info(f"Created schedule: {schedule.video_title}.")
-        return ScheduleDto.model_validate(new_schedule)
-    except Exception as e:
-        logger.error(f"Failed to create schedule: {str(e)}")
-        raise Exception("Error occurred while creating the schedule.")
     
 async def create_schedules_in_batch(schedules: List[ScheduleDto], current_user_id: str, db: Session) -> List[ScheduleDto]:
     """
@@ -257,7 +171,7 @@ async def create_schedules_in_batch(schedules: List[ScheduleDto], current_user_i
 
 async def update_schedule(schedule_id: int, schedule: ScheduleDto, db: Session) -> Optional[ScheduleDto]:
     """
-    Update an existing schedule and handle updated file transfers.
+    Update an existing schedule with new details excluding audio and video fields.
 
     Args:
     -----
@@ -277,36 +191,45 @@ async def update_schedule(schedule_id: int, schedule: ScheduleDto, db: Session) 
     -----
     - DEBUG: Start and success of schedule update.
     - INFO: Details of the updated schedule.
-    - ERROR: Failures during file updates or database operations.
+    - ERROR: Failures during database operations.
     """
     logger.debug(f"Updating schedule with ID: {schedule_id}.")
     try:
+        # Fetch the existing schedule
         existing_schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
         if not existing_schedule:
             logger.debug(f"Schedule not found: ID {schedule_id}.")
             return None
 
-        # Handle file transfers if necessary
-        if schedule.image_location != existing_schedule.image_location:
-            image_path = transfer_file(schedule.image_location, f"{schedule.video_title}_image.jpg")
-            existing_schedule.image_location = image_path
-
-        if schedule.audio_location != existing_schedule.audio_location:
-            audio_path = transfer_file(schedule.audio_location, f"{schedule.video_title}_audio.mp3")
-            existing_schedule.audio_location = audio_path
-
+        # Update fields excluding audio and image
         existing_schedule.upload_date = schedule.upload_date
         existing_schedule.executed = schedule.executed
         existing_schedule.video_title = schedule.video_title
+        existing_schedule.video_description = schedule.video_description
+        existing_schedule.privacy_status = schedule.privacy_status
+        existing_schedule.embeddable = schedule.embeddable
+        existing_schedule.license = schedule.license
+        existing_schedule.category = schedule.category
+        existing_schedule.tags = json.dumps(schedule.tags)  # Serialize tags as JSON
 
+        # Commit changes to the database
         db.commit()
         db.refresh(existing_schedule)
+
         logger.debug(f"Schedule ID {schedule_id} updated successfully.")
         logger.info(f"Updated schedule: {existing_schedule.video_title}.")
-        return ScheduleDto.model_validate(existing_schedule)
+        return ScheduleDto.model_validate(
+                {
+                    **schedule.__dict__,
+                    "tags": json.loads(schedule.tags) if schedule.tags else [],
+                }
+            )
+
     except Exception as e:
         logger.error(f"Failed to update schedule ID {schedule_id}: {str(e)}")
+        db.rollback()  # Rollback in case of failure
         raise Exception("Error occurred while updating the schedule.")
+
 
 
 async def delete_schedule(schedule_id: int, db: Session) -> bool:

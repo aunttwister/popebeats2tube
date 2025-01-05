@@ -37,12 +37,15 @@ function EditModal({ open, onClose, onSave, editFormData, setEditFormData }) {
       setCategories(mockCategories);
     };
     fetchCategories();
-  }, []);
+
+    setTags(editFormData.tags || []); // Sync tags state when editFormData changes
+  }, [editFormData]);
 
   const handleTagKeyDown = (e) => {
     if (e.key === 'Enter' && e.target.value.trim()) {
-      setTags([...tags, e.target.value.trim()]);
-      setEditFormData({ ...editFormData, tags: [...tags, e.target.value.trim()] });
+      const updatedTags = [...tags, e.target.value.trim()];
+      setTags(updatedTags);
+      setEditFormData({ ...editFormData, tags: updatedTags });
       e.target.value = '';
     }
   };
@@ -99,7 +102,7 @@ function EditModal({ open, onClose, onSave, editFormData, setEditFormData }) {
               onChange={(e) => setEditFormData({ ...editFormData, category: e.target.value })}
             >
               {categories.map((cat) => (
-                <MenuItem key={cat.id} value={cat.id}>
+                <MenuItem key={cat.id} value={cat.name}>
                   {cat.name}
                 </MenuItem>
               ))}
@@ -112,7 +115,7 @@ function EditModal({ open, onClose, onSave, editFormData, setEditFormData }) {
               <FormLabel>Privacy Status</FormLabel>
               <RadioGroup
                 row
-                value={editFormData.privacy_status || 'public'}
+                value={editFormData.privacy_status || 'private'}
                 onChange={(e) =>
                   setEditFormData({ ...editFormData, privacy_status: e.target.value })
                 }
@@ -154,7 +157,7 @@ function EditModal({ open, onClose, onSave, editFormData, setEditFormData }) {
           {/* Upload Date and Time */}
           <MobileDateTimePicker
             label="Upload Date and Time"
-            value={editFormData.upload_date || null} // Must be a Dayjs object
+            value={editFormData.upload_date || null}
             onChange={(date) => setEditFormData({ ...editFormData, upload_date: date })}
             renderInput={(params) => <TextField {...params} fullWidth margin="normal" />}
           />

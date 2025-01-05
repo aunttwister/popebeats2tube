@@ -51,6 +51,7 @@ class Schedule(Base):
     privacy_status = Column(String(32))
     embeddable = Column(Boolean)
     license = Column(String(64))
+    video_description = Column(String(1024))
     user_id = Column(String(36), ForeignKey('users.id'))
 
     user = relationship("User", back_populates="schedules")

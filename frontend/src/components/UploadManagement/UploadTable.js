@@ -20,7 +20,7 @@ function UploadTable({ uploads, onEdit, onDelete }) {
             <TableRow key={upload.id}>
               <TableCell data-label="Title">{upload.video_title}</TableCell>
               <TableCell data-label="Upload Date">
-                {new Date(upload.upload_date).toLocaleDateString()}
+                {new Date(upload.upload_date).toLocaleString()}
               </TableCell>
               <TableCell data-label="Status">
                 {upload.executed ? 'Archived' : 'Scheduled'}

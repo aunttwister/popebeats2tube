@@ -65,6 +65,7 @@ class ScheduleDto(BaseModel):
     privacy_status: str = Field(default="private")
     embeddable: bool = Field(default=False)
     license: str = Field(default="youtube")
+    video_description: Optional[str] = None
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -75,23 +76,3 @@ class ScheduleDto(BaseModel):
             datetime: lambda v: v.isoformat(),
         }
     )
-    @field_validator('upload_date')
-    @classmethod
-    def validate_upload_date(cls, v):
-        """
-        Ensure that the upload date is in the future and is timezone-aware.
-        Raises a ValueError if the upload date is in the past.
-        """
-        try:
-            if getattr(cls, 'executed', True):
-                return v
-            if v:
-                # Make the datetime timezone-aware if it's naive
-                if v.tzinfo is None:
-                    v = v.replace(tzinfo=timezone.utc)
-                if v < datetime.now(timezone.utc):
-                    raise ValueError("Upload date must be in the future.")
-            return v
-        except Exception as e:
-            logger.error(f"Validation error in upload_date: {e}")
-            raise

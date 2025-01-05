@@ -10,7 +10,7 @@ as well as centralized exception handling.
 from typing import Any
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
-from fastapi import HTTPException, Request
+from fastapi import HTTPException, Request, Response
 
 def create_response(status_code: int, title: str, message: str, data: Any = None) -> JSONResponse:
     """
@@ -105,7 +105,7 @@ def response_202(message: str, data: Any = None) -> JSONResponse:
     """
     return create_response(202, message, data)
 
-def response_204(message: str) -> JSONResponse:
+def response_204() -> JSONResponse:
     """
     Creates a response for 204 No Content status code.
     
@@ -116,10 +116,4 @@ def response_204(message: str) -> JSONResponse:
     Returns:
     - JSONResponse: A standardized 204 No Content response.
     """
-    response_content = {
-        "title": message,
-        "status_code": "204",
-        "message": message,
-        "data": None  # No content for 204
-    }
-    return JSONResponse(status_code=204, content=response_content)
+    return Response(status_code=204)
