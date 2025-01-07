@@ -6,13 +6,12 @@ data integrity and type safety throughout the application.
 
 Classes:
     TuneDto: Represents the data structure for tune-related operations.
-    ScheduleDto: Represents the data structure for schedule-related operations.
+    tuneDto: Represents the data structure for tune-related operations.
 """
 
 from typing import Optional
 from datetime import datetime, timezone
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
-from app.logging.logging_setup import logger
 
 class UserCreateDTO(BaseModel):
     email: EmailStr
@@ -30,34 +29,17 @@ class AuthRequestDto(BaseModel):
 
 class TuneDto(BaseModel):
     """
-    Data Transfer Object (DTO) for a Tune.
-
-    Attributes:
-        id (int): The unique identifier of the tune.
-        title (str): The title of the tune.
-        description (str): A description of the tune.
-        audio_file (str): The file path or file name of the audio file.
-        image_file (str): The file path or file name of the associated image.
-    """
-    id: int
-    title: str
-    description: str
-    audio_file: str
-    image_file: str
-
-class ScheduleDto(BaseModel):
-    """
-    Data Transfer Object (DTO) for a Schedule.
+    Data Transfer Object (DTO) for a tune.
     """
     id: Optional[int] = None
     date_created: Optional[datetime] = None
-    upload_date: datetime
+    upload_date: Optional[datetime] = None
     executed: bool
     video_title: str
-    img_file: Optional[str] = None
+    img_file_base64: Optional[str] = None
     img_name: str
     img_type: str
-    audio_file: Optional[str] = None
+    audio_file_base64: Optional[str] = None
     audio_name: str
     audio_type: str
     tags: Optional[list[str]] = Field(default_factory=list)

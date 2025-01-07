@@ -1,9 +1,13 @@
+from datetime import datetime, timezone
 from typing import Generator
 import uuid
 import subprocess
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, ForeignKey, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session, relationship
+from sqlalchemy.dialects.mysql import TIMESTAMP
+from sqlalchemy import event
+from app.db.custom_types import UtcDateTime
 from app.services.config_mgmt_service import load_config
 from app.logging.logging_setup import logger
 
@@ -29,15 +33,15 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # Declare the base class for ORM models
 Base = declarative_base()
 
-class Schedule(Base):
+class Tune(Base):
     """
-    Represents the 'schedules' table in the database.
+    Represents the 'tunes' table in the database.
     """
-    __tablename__ = 'schedules'
+    __tablename__ = 'tunes'
 
     id = Column(Integer, primary_key=True, index=True)
-    date_created = Column(DateTime)
-    upload_date = Column(DateTime, nullable=True)
+    date_created = Column(UtcDateTime)
+    upload_date = Column(UtcDateTime, nullable=True)
     executed = Column(Boolean)
     video_title = Column(String(255))
     base_dest_path = Column(String(512))
@@ -53,20 +57,13 @@ class Schedule(Base):
     video_description = Column(String(1024))
     user_id = Column(String(36), ForeignKey('users.id'))
 
-    user = relationship("User", back_populates="schedules")
+    # Backward relationship to User
+    user = relationship("User", back_populates="tunes")
+
 
 class User(Base):
     """
     Represents the 'users' table in the database.
-
-    Attributes:
-    - id (str): The primary key and unique identifier for each user.
-    - email (str): The email address of the user. Must be unique.
-    - refresh_token (str): The OAuth refresh token for the user.
-    - token_expiry (datetime): The expiration time of the access token.
-    - date_created (datetime): The date and time when the user record was created.
-    - is_active (bool): Indicates whether the user's account is active.
-    - schedules (List[Schedule]): Relationship with the Schedule table.
     """
     __tablename__ = 'users'
 
@@ -74,11 +71,12 @@ class User(Base):
     email = Column(String(255), unique=True, nullable=False)
     youtube_access_token = Column(String(512), nullable=True)
     youtube_refresh_token = Column(String(512), nullable=True)
-    youtube_token_expiry = Column(DateTime, nullable=True)
-    date_created = Column(DateTime, nullable=False)
+    youtube_token_expiry = Column(UtcDateTime, nullable=True)
+    date_created = Column(UtcDateTime, nullable=False)
     is_active = Column(Boolean, default=True)
 
-    schedules = relationship("Schedule", back_populates="user")
+    # Backward relationship to Tune
+    tunes = relationship("Tune", back_populates="user")
 
 # Initialize database schema using Alembic for migrations
 def init_db():

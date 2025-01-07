@@ -1,10 +1,10 @@
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, Request
 from requests import Session
-from app.db import get_db_session
+from app.db.db import get_db_session
 from app.dto import AuthRequestDto
 from app.services.jwt_mgmt_service import create_jwt
-from app.repositories.user_mgmt_repository import persist_credentials, verify_user
+from app.repositories.user_mgmt_repository import persist_credentials, verify_user_email
 from app.services.google_oauth_service import get_google_oauth_credentials, verify_google_token, refresh_google_access_token
 from app.services.config_mgmt_service import load_config
 from app.logging.logging_setup import logger
@@ -34,7 +34,7 @@ async def google_auth(auth_request: AuthRequestDto):
         logger.error("Google token is missing email.")
         raise HTTPException(status_code=401, detail="Invalid Google Token: Missing email.")
 
-    user = verify_user(email)
+    user = verify_user_email(email)
     if not user:
         raise HTTPException(status_code=401, detail=f"User with email '{email}' is not authorized.")
 
@@ -122,7 +122,7 @@ async def refresh_auth_token(request: Request, db: Session = Depends(get_db_sess
     logger.debug("Starting access token refresh process.")
     logger.info(f"Starting access token refresh process for user {user_email}.")
     
-    user = verify_user(user_email)
+    user = verify_user_email(user_email)
     if not user or not user.youtube_refresh_token:
         logger.error("Invalid user or missing refresh token.")
         raise HTTPException(status_code=401, detail="Invalid user or missing refresh token.")

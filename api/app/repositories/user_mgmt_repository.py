@@ -24,12 +24,12 @@ Functions:
 
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
-from app.db import User, get_db_session
+from app.db.db import User, get_db_session
 from app.dto import UserCreateDTO
 from app.logging.logging_setup import logger
 
 
-def verify_user(email: str):
+def verify_user_email(email: str):
     """
     Check if a user exists in the database by their email.
 
@@ -57,6 +57,41 @@ def verify_user(email: str):
         if user:
             logger.debug("User verification successful.")
             logger.info(f"User found: {email}")
+        else:
+            logger.warning("User verification failed. User not found.")
+    finally:
+        db.close()
+
+    return user
+
+def verify_user_id(user_id: str):
+    """
+    Check if a user exists in the database by their id.
+
+    Args:
+    -----
+    user_id : str
+        The id of the user to verify.
+
+    Returns:
+    --------
+    User or None
+        The user object if a matching email is found; otherwise, None.
+
+    Logs:
+    -----
+    - DEBUG: Indicate the start and end of the verification process.
+    - INFO: Include the id being verified (if advanced logging is enabled).
+    """
+    logger.debug("Starting user verification.")
+    logger.info(f"Verifying user with id: {user_id}")
+
+    db: Session = next(get_db_session())
+    try:
+        user = db.query(User).filter(User.id == str(user_id)).first()
+        if user:
+            logger.debug("User verification successful.")
+            logger.info(f"User found: {user_id}")
         else:
             logger.warning("User verification failed. User not found.")
     finally:

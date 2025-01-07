@@ -1,15 +1,13 @@
 from fastapi import APIRouter, HTTPException, Depends, Header
 from sqlalchemy.orm import Session
-import os
 
-from app.auth_dependencies import get_current_user
-from app.db import get_db_session
+from app.db.db import get_db_session
 from app.dto import UserCreateDTO
 from app.logging.logging_setup import logger
 from app.services.config_mgmt_service import load_config
 from app.repositories.user_mgmt_repository import create_user_in_db
 
-user_mgmt_router = APIRouter(dependencies=[Depends(get_current_user)])
+user_mgmt_router = APIRouter()
 
 # Load configuration
 CONFIG = load_config()

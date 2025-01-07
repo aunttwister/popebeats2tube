@@ -1,81 +1,82 @@
-# """
-# This module provides API endpoints for uploading image and audio files.
+from datetime import datetime, timedelta, timezone
+from requests import Session
 
-# It uses FastAPI for creating the API and Loguru for logging. The module supports the following endpoints:
-# - POST /upload/ : Allows uploading a single image and audio file.
-# - POST /batch_upload/ : Allows uploading multiple image and audio files at once.
+from app.db.db import User
+from app.dto import TuneDto
+from app.logging.logging_setup import logger
+from app.repositories.user_mgmt_repository import persist_credentials
+from app.services.file_transfer_service import transfer_files
+from app.services.generate_mp4_service import generate_video
+from app.services.google_oauth_service import refresh_google_access_token
+from app.services.tune2tube_service import upload_video
+from app.utils.file_util import base64_to_file
 
-# The module validates the file type based on predefined allowed extensions and logs relevant information.
-# """
-# from fastapi import APIRouter, File, UploadFile, HTTPException
-# from fastapi.responses import JSONResponse
-# from app.config import setup_logging
-# #from ..utils import save_file
-# from ..settings import AUDIO_DIR, IMAGE_DIR  # Import global paths for audio and image
 
-# # Initialize the logger once
-# logger = setup_logging()
+async def validate_and_refresh_token(user: User, db: Session):
+    """
+    Validates the user's access token and refreshes it if expired.
+    """
+    logger.debug("Starting token validation.")
+    if datetime.now(timezone.utc) >= user.youtube_token_expiry:
+        logger.debug("Access token expired. Refreshing token...")
+        try:
+            token_response = await refresh_google_access_token(user.youtube_refresh_token)
+            new_access_token = token_response['access_token']
+            
+            new_refresh_token = token_response.get("refresh_token")
+            if new_refresh_token is None:
+                new_refresh_token = user.youtube_refresh_token
+            
+            new_token_expiry = datetime.now(timezone.utc) + timedelta(seconds=token_response['expires_in'])
+            persist_credentials(
+                user_id=user.id,
+                youtube_access_token=new_access_token,
+                youtube_refresh_token=new_refresh_token,
+                youtube_token_expiry=new_token_expiry,
+                db=db
+            )
+            logger.info("Access token refreshed and persisted successfully.")
+        except Exception as e:
+            logger.error(f"Token refresh failed: {e}")
+            raise
 
-# app = APIRouter()
-
-# ALLOWED_AUDIO_EXTENSIONS = {'mp3', 'wav', 'flac'}
-# ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg'}
-
-# def allowed_file(filename, allowed_extensions):
-#     """Check if the file is allowed based on its extension."""
-#     return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions
-
-# @app.post("/upload")
-# async def upload_file(audiofile: UploadFile = File(...), imagefile: UploadFile = File(...)):
-#     """Single file upload endpoint for audio or picture."""
-#     logger.info("Started file upload.")
-
-#     if not allowed_file(audiofile.filename, ALLOWED_AUDIO_EXTENSIONS):
-#         logger.error(f"Invalid audio file type: {audiofile.filename}. Allowed audio types are {ALLOWED_AUDIO_EXTENSIONS}.")
-#         raise HTTPException(status_code=400, detail="Invalid file type")
+async def process_and_upload_tune(tune: TuneDto, user: User):
+    """
+    Handles the process of generating a video and uploading it to YouTube.
+    """
+    logger.debug(f"Started processing tune: {tune.video_title} for user: {user.id}")
     
-#     if not allowed_file(imagefile.filename, ALLOWED_IMAGE_EXTENSIONS):
-#         logger.error(f"Invalid image file type: {imagefile.filename}. Allowed image types are {ALLOWED_IMAGE_EXTENSIONS}")
-#         raise HTTPException(status_code=400, detail="Invalid file type")
-#     # Check the file type and save it accordingly
+    try:     
+        audio_file = base64_to_file(tune.audio_file_base64, tune.audio_name)
+        img_file = base64_to_file(tune.img_file_base64, tune.img_name)
+        
+        destination_path = transfer_files([audio_file, img_file], user.id, tune.video_title)
+        destination_path = destination_path.replace("\\", "/")
 
-#     audio_file_path = await save_file(audiofile, AUDIO_DIR)
-#     logger.info(f"Audio file uploaded successfully: {audio_file_path}")
-    
-#     image_file_path = await save_file(imagefile, IMAGE_DIR)
-#     logger.info(f"Image file uploaded successfully: {image_file_path}")
-    
-#     logger.info("Files uploaded successfully.")
-#     return JSONResponse(content={"message": "Files uploaded successfully", "audio_file_path": audio_file_path, "image_file_path": image_file_path}, status_code=200)
+        img_path = destination_path + '/' + tune.img_name
+        audio_path = destination_path + '/' + tune.audio_name
+        video_output_path = destination_path + '/' + tune.video_title + '.' + 'mp4'
+        
+        # Generate video
+        logger.debug(f"Starting video generation for title: {tune.video_title}")
+        mp4_output_path = generate_video(audio_path, img_path, video_output_path, tune.video_title)
+        logger.info(f"Video generation completed: {mp4_output_path}")
 
-# @app.post("/batch_upload")
-# async def batch_upload(audio_files: list[UploadFile] = File(...), image_files: list[UploadFile] = File(...)):
-#     """Batch upload endpoint for audio and picture files."""
-#     logger.info("Started batch upload.")
-
-#     uploaded_files = {'audio_files': [], 'image_files': []}
-
-#     for audio_file in audio_files:
-#         if allowed_file(audio_file.filename, ALLOWED_AUDIO_EXTENSIONS):
-#             audio_path = await save_file(audio_file, AUDIO_DIR)
-#             uploaded_files['audio_files'].append(audio_path)
-#             logger.info(f"Uploaded audio file: {audio_path}")
-#         else:
-#             logger.error(f"Invalid audio file: {audio_file.filename}")
-#             raise HTTPException(status_code=400, detail=f"Invalid audio file: {audio_file.filename}")
-    
-#     for image_file in image_files:
-#         if allowed_file(image_file.filename, ALLOWED_IMAGE_EXTENSIONS):
-#             image_path = await save_file(image_file, IMAGE_DIR)
-#             uploaded_files['image_files'].append(image_path)
-#             logger.info(f"Uploaded image file: {image_path}")
-#         else:
-#             logger.error(f"Invalid image file: {image_file.filename}")
-#             raise HTTPException(status_code=400, detail=f"Invalid image file: {image_file.filename}")
-
-#     logger.info("Batch upload completed successfully.")
-#     return JSONResponse(content={"message": "Files uploaded successfully", "uploaded_files": uploaded_files}, status_code=200)
-
-# if __name__ == "__main__":
-#     import uvicorn
-#     uvicorn.run(app, host="0.0.0.0", port=8000)
+        # Upload to YouTube
+        logger.debug(f"Initiating YouTube upload for video: {mp4_output_path}")
+        upload_video(
+            access_token=user.youtube_access_token,
+            refresh_token=user.youtube_refresh_token,
+            video_file=mp4_output_path,
+            video_title=tune.video_title,
+            description=tune.video_description,
+            category=tune.category,
+            license=tune.license,
+            embeddable=tune.embeddable,
+            privacy_status=tune.privacy_status,
+            tags=tune.tags
+        )
+        logger.info(f"Successfully uploaded video '{tune.video_title}' to YouTube.")
+    except Exception as e:
+        logger.error(f"Failed to process and upload tune '{tune.video_title}': {str(e)}")
+        raise

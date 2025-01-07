@@ -25,17 +25,9 @@ import os
 import shutil
 from fastapi import UploadFile
 from app.services.config_mgmt_service import load_config
-from app.utils.file_util import generate_file_path, validate_and_create_path
+from app.utils.file_util import generate_file_path_windows, validate_and_create_path
 import mimetypes
 from app.logging.logging_setup import logger
-
-# Load configuration
-CONFIG = load_config()
-FILE_SHARE_CONFIG = CONFIG.get("file_share", {})
-IP_ADDR = FILE_SHARE_CONFIG.get("ip_addr", "")
-BASE_PATH = FILE_SHARE_CONFIG.get("base_path", "")
-AUDIO_PATH = FILE_SHARE_CONFIG.get("audio_path", "")
-IMG_PATH = FILE_SHARE_CONFIG.get("img_path", "")
 
 
 # Function to transfer multiple files
@@ -70,12 +62,8 @@ def transfer_files(files: list[UploadFile], user_id: str, video_title: str) -> s
     """
     logger.debug(f"Starting file transfer for {len(files)} files, user: {user_id}.")
     try:
-        if not IP_ADDR or not BASE_PATH:
-            logger.error("File share configuration is invalid.")
-            raise ValueError("File share configuration is invalid. Please check 'ip_addr' and 'base_path'.")
-
         # Generate the destination path
-        destination_path = generate_file_path(IP_ADDR, BASE_PATH, user_id, video_title)
+        destination_path = generate_file_path_windows(user_id, video_title)
         logger.info(f"Generated destination path: {destination_path}.")
 
         destination_path = validate_and_create_path(destination_path)

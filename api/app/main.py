@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.routing import APIRouter
-from app.endpoints.schedule_mgmt_endpoint import schedule_mgmt_router
+from app.endpoints.schedule_tune_endpoint import schedule_tune_router
 from app.endpoints.config_mgmt_endpoint import config_mgmt_router
 from app.endpoints.auth_endpoint import auth_router
-from app.endpoints.instant_upload_endpoint import instant_upload_router
+from app.endpoints.instant_tune_endpoint import instant_upload_router
 from app.endpoints.user_mgmt_endpoint import user_mgmt_router
 from app.auth_dependencies import custom_openapi
 from app.services.config_mgmt_service import load_config
@@ -58,10 +58,10 @@ async def add_security_headers(request, call_next):
 api_router = APIRouter(prefix="/api")
 
 # Include routers
-api_router.include_router(schedule_mgmt_router, prefix="/schedule-upload", tags=["schedule-upload"])
+api_router.include_router(schedule_tune_router, prefix="/scheduled-tune", tags=["scheduled-tune"])
 api_router.include_router(config_mgmt_router, prefix="/config-management", tags=["config-management"])
 api_router.include_router(auth_router, prefix="/auth", tags=["auth"])
-api_router.include_router(instant_upload_router, prefix="/instant-upload", tags=["instant-upload"])
+api_router.include_router(instant_upload_router, prefix="/instant-tune", tags=["instant-tune"])
 api_router.include_router(user_mgmt_router, prefix="/user-mgmt", tags=["user-mgmt"])
 
 # Mount the API router

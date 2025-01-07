@@ -6,9 +6,15 @@ from app.logging.logging_setup import logger
 
 from fastapi import UploadFile
 
-def generate_file_path(
-    ip_addr: str,
-    base_path: str,
+from app.services.config_mgmt_service import load_config
+
+# Load configuration
+CONFIG = load_config()
+FILE_SHARE_CONFIG = CONFIG.get("file_share", {})
+IP_ADDR = FILE_SHARE_CONFIG.get("ip_addr", "")
+BASE_PATH = FILE_SHARE_CONFIG.get("base_path", "")
+
+def generate_file_path_windows(
     user_id: str,
     video_title: str
 ) -> str:
@@ -17,12 +23,6 @@ def generate_file_path(
 
     Args:
     -----
-    ip_addr : str
-        The IP address of the file server.
-    base_path : str
-        The base directory path for file storage.
-    user_email : str
-        The email address of the user (used to determine the user-specific directory).
     video_title : str
         The title of the video (used to create a unique directory for the files).
     file_type : Literal["audio", "image"]
@@ -38,18 +38,64 @@ def generate_file_path(
     ValueError
         If `file_type` is not "audio" or "image".
     """
-    sanitized_base_path = base_path.replace(':', '$').replace("/", "\\")
+    if not IP_ADDR or not BASE_PATH:
+            logger.error("File share configuration is invalid.")
+            raise ValueError("File share configuration is invalid. Please check 'ip_addr' and 'base_path'.")
+    
+    sanitized_base_path = BASE_PATH.replace(':', '$').replace("/", "\\")
     sanitized_id = user_id.replace("-", "_")
     sanitized_video_title = video_title.replace("/", "_")
-    logger.debug(f"Parameters for file path generation: ip_addr={ip_addr}, base_path={sanitized_base_path}, user_id={sanitized_id}, video_title={sanitized_video_title}")
+    logger.debug(f"Parameters for file path generation: ip_addr={IP_ADDR}, base_path={sanitized_base_path}, user_id={sanitized_id}, video_title={sanitized_video_title}")
     # Build the file path
     file_path = os.path.join(
-        f"\\\\{ip_addr}",
+        f"\\\\{IP_ADDR}",
         sanitized_base_path,
         sanitized_id,
         sanitized_video_title
     )
 
+    return file_path
+
+def generate_file_path_non_windows(
+    user_id: str,
+    video_title: str
+) -> str:
+    """
+    Generate a structured file path for script usage.
+
+    Args:
+    -----
+    video_title : str
+        The title of the video (used to create a unique directory for the files).
+    file_type : Literal["audio", "image"]
+        The type of file ("audio" or "image"), used to determine the subdirectory.
+
+    Returns:
+    --------
+    str
+        The generated file path.
+
+    Raises:
+    -------
+    ValueError
+        If `file_type` is not "audio" or "image".
+    """
+    if not IP_ADDR or not BASE_PATH:
+            logger.error("File share configuration is invalid.")
+            raise ValueError("File share configuration is invalid. Please check 'ip_addr' and 'base_path'.")
+    
+    sanitized_base_path = BASE_PATH.replace(':', '$')
+    sanitized_id = user_id.replace("-", "_")
+    sanitized_video_title = video_title.replace("/", "_")
+    logger.debug(f"Parameters for file path generation: ip_addr={IP_ADDR}, base_path={sanitized_base_path}, user_id={sanitized_id}, video_title={sanitized_video_title}")
+    # Build the file path
+    file_path = os.path.join(
+        f"//{IP_ADDR}",
+        sanitized_base_path,
+        sanitized_id,
+        sanitized_video_title
+    )
+    
     return file_path
 
 # Function to check if a directory exists

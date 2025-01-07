@@ -1,13 +1,12 @@
+// InstantUpload.js
 import React, { useState } from 'react';
 import { Box, Button } from '@mui/material';
-import { LocalizationProvider } from '@mui/x-date-pickers';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import UploadList from './UploadList';
-import { createBatchSchedule } from '../../services/scheduleTuneService.ts';
+import UploadList from './UploadList.js';
+import { createBatchInstant } from '../../services/instantTuneService.ts';
 import { fileConverter } from '../../utils/fileConverter.js';
-import { toastHelper } from '../../utils/toastHelper';
+import { toastHelper } from '../../utils/toastHelper.js';
 
-function ScheduledUpload() {
+function InstantUpload() {
   const [uploadContainers, setUploadContainers] = useState([
     {
       audio: null,
@@ -19,7 +18,6 @@ function ScheduledUpload() {
       privacyStatus: 'private',
       embeddable: false,
       license: 'youtube',
-      uploadDate: null,
     },
   ]);
 
@@ -36,10 +34,10 @@ function ScheduledUpload() {
         privacyStatus: 'private',
         embeddable: false,
         license: 'youtube',
-        uploadDate: null,
       },
     ]);
   };
+
   const handleUpdateContainer = (index, updatedValues) => {
     const updatedContainers = [...uploadContainers];
     updatedContainers[index] = { ...updatedContainers[index], ...updatedValues };
@@ -48,7 +46,7 @@ function ScheduledUpload() {
 
   const handleSubmit = async () => {
     try {
-      const schedules = await Promise.all(
+      const instantTunes = await Promise.all(
         uploadContainers.map(async (container) => {
           const imageBase64 = container.image
             ? await fileConverter.fileToBase64(container.image)
@@ -56,12 +54,9 @@ function ScheduledUpload() {
           const audioBase64 = container.audio
             ? await fileConverter.fileToBase64(container.audio)
             : null;
-  
+
           return {
             video_title: container.title,
-            upload_date: container.uploadDate
-              ? container.uploadDate.toISOString()
-              : null,
             img_file_base64: imageBase64,
             img_name: container.image?.name,
             img_type: container.image?.name.split('.').pop(),
@@ -74,41 +69,39 @@ function ScheduledUpload() {
             embeddable: container.embeddable || false, // Default to false
             license: container.license || 'youtube', // Default to 'youtube'
             video_description: container.description || '', // Map description
-            executed: false,
+            executed: true,
           };
         })
       );
-  
-      console.log('Schedules:', schedules);
-  
-      const response = await createBatchSchedule(schedules);
+
+      console.log('Instants tunes:', instantTunes);
+
+      const response = await createBatchInstant(instantTunes);
       toastHelper.newMessage('success', response.title, response.message);
     } catch (error) {
-      console.error('Error creating schedules:', error);
+      console.error('Error creating instants:', error);
       toastHelper.newMessage('error', error.title, error.message);
     }
   };
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <Box sx={{ padding: 3 }}>
-        <UploadList
-          uploadContainers={uploadContainers}
-          onUpdate={handleUpdateContainer}
-        />
-        <Button
-          variant="contained"
-          onClick={handleAddContainer}
-          sx={{ marginRight: 2 }}
-        >
-          Add More Scheduled Containers
-        </Button>
-        <Button variant="contained" color="primary" onClick={handleSubmit}>
-          Submit Scheduled Uploads
-        </Button>
-      </Box>
-    </LocalizationProvider>
+    <Box sx={{ padding: 3 }}>
+      <UploadList
+        uploadContainers={uploadContainers}
+        onUpdate={handleUpdateContainer}
+      />
+      <Button
+        variant="contained"
+        onClick={handleAddContainer}
+        sx={{ marginRight: 2 }}
+      >
+        Add More Instant Containers
+      </Button>
+      <Button variant="contained" color="primary" onClick={handleSubmit}>
+        Submit Instant Uploads
+      </Button>
+    </Box>
   );
 }
 
-export default ScheduledUpload;
+export default InstantUpload;

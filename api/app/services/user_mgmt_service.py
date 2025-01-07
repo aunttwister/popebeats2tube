@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import HTTPException
-from app.db import User
+from app.db.db import User
 from app.dto import UserCreateDTO
 from app.logging.logging_setup import logger
 

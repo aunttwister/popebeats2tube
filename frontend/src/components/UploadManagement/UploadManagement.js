@@ -4,7 +4,7 @@ import UploadTable from './UploadTable';
 import PaginationControl from './PaginationControl';
 import DeleteModal from './DeleteModal';
 import EditModal from './EditModal';
-import { getSchedules, editSchedule, removeSchedule } from '../../services/scheduleService.ts';
+import { getSchedules, editSchedule, removeSchedule } from '../../services/scheduleTuneService.ts';
 import dayjs from 'dayjs';
 import './UploadManagement.css';
 import { toastHelper } from '../../utils/toastHelper';

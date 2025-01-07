@@ -153,7 +153,7 @@ function UploadContainer({ onDropAudio, onDropImage, onChange, containerIndex, a
             onChange={(e) => setCategory(e.target.value)} // Set the selected category name
           >
               {categories.map((cat) => (
-                <MenuItem key={cat.id} value={cat.name}> {/* Pass category.name as the value */}
+                <MenuItem key={cat.id} value={cat.id}> {/* Pass category.name as the value */}
                   {cat.name} {/* Display category name */}
                 </MenuItem>
             ))}

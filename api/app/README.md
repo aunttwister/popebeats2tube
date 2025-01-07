@@ -31,11 +31,11 @@ Handles Google Authentication for secure API access.
 Defines API endpoints, including:
 - `/upload_tune/single`
 - `/upload_tune/batch`
-- `/schedule_upload/get`
-- `/schedule_upload/get/{id}`
-- `/schedule_upload/create`
-- `/schedule_upload/update/{id}`
-- `/schedule_upload/delete/{id}`
+- `/tune_upload/get`
+- `/tune_upload/get/{id}`
+- `/tune_upload/create`
+- `/tune_upload/update/{id}`
+- `/tune_upload/delete/{id}`
 
 ### **app/db.py**
 Sets up the SQLite database connection and provides a simple interface for queries.
@@ -56,9 +56,9 @@ class TuneDTO(BaseModel):
     image_file: str  # File path
 ```
 
-#### `ScheduleDTO`
+#### `tuneDTO`
 ```python
-class ScheduleDTO(BaseModel):
+class tuneDTO(BaseModel):
     id: int
     date_created: str  # ISO 8601 format
     upload_date: Optional[str]  # ISO 8601 format or None
