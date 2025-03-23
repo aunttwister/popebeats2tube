@@ -26,7 +26,7 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from app.db.db import User, get_db_session
 from app.dto import UserCreateDTO
-from app.logging.logging_setup import logger
+from app.logger.logging_setup import logger
 
 
 def verify_user_email(email: str):

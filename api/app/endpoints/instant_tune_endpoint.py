@@ -30,7 +30,7 @@ from app.dto import TuneDto
 from app.repositories.user_mgmt_repository import verify_user_id
 from app.services.upload_service import process_and_upload_tune, validate_and_refresh_token
 from app.utils.http_response_util import response_200
-from app.logging.logging_setup import logger
+from app.logger.logging_setup import logger
 
 instant_upload_router = APIRouter(dependencies=[Depends(get_current_user)])
 

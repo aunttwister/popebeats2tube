@@ -3,7 +3,7 @@ from requests import Session
 
 from app.db.db import User
 from app.dto import TuneDto
-from app.logging.logging_setup import logger
+from app.logger.logging_setup import logger
 from app.repositories.user_mgmt_repository import persist_credentials
 from app.services.file_transfer_service import transfer_files
 from app.services.generate_mp4_service import generate_video

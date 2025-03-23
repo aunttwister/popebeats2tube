@@ -21,17 +21,17 @@ Dependencies:
 - Requires `config_loader` to load global configuration from `config.json`.
 - Requires the `loguru` library for advanced logging features.
 """
+import os
 import sys
 from loguru import logger
 from pathlib import Path
-from app.services.config_mgmt_service import load_config
 
 def setup_logging():
     """
     Sets up logging based on the global configuration loaded by config_loader.
 
     The function initializes logging parameters such as log file location, rotation,
-    retention, compression, and log level using the settings defined in `config.json`.
+    retention, compression, and log level using the settings defined as environment variables.
 
     Logging Modes:
     --------------
@@ -45,17 +45,13 @@ def setup_logging():
 
     :return: A logger object configured with the specified settings.
     """
-    # Load global configuration
-    config = load_config()
 
-    # Retrieve logging configuration
-    logging_config = config.get("logging", {})
-    log_dir = Path(logging_config.get("log_dir", "./logs"))
-    log_file = logging_config.get("log_file", "app.log")
-    rotation = logging_config.get("rotation", "1 day")
-    retention = logging_config.get("retention", "7 days")
-    compression = logging_config.get("compression", "zip")
-    enable_advanced_logging = logging_config.get("EnableAdvancedLogging", False)
+    log_dir = Path(os.getenv("POPEBEATS2TUBE_LOGGING_LOG_DIR", "./logs"))
+    log_file = os.getenv("POPEBEATS2TUBE_LOGGING_LOG_FILE", "app.log")
+    rotation = os.getenv("POPEBEATS2TUBE_LOGGING_ROTATION", "1 day")
+    retention = os.getenv("POPEBEATS2TUBE_LOGGING_RETENTION", "7 days")
+    compression = os.getenv("POPEBEATS2TUBE_LOGGING_COMPRESSION", "zip")
+    enable_advanced_logging = os.getenv("POPEBEATS2TUBE_LOGGING_ENABLE_ADVANCED_LOGGING", "false").lower() == "true"
 
     # Ensure log directory exists
     log_dir.mkdir(parents=True, exist_ok=True)

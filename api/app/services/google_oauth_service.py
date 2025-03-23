@@ -3,17 +3,17 @@ from google.oauth2 import id_token
 from google.auth.transport import requests    
 import httpx
 
-from app.services.config_mgmt_service import load_config
-from app.logging.logging_setup import logger
+from app.logger.logging_setup import logger
 
-CONFIG = load_config()
-GOOGLE_OAUTH = CONFIG.get("google_oauth", {})
+import os
 
-GOOGLE_CLIENT_ID = GOOGLE_OAUTH.get("client_id", "")
-GOOGLE_CLIENT_SECRET = GOOGLE_OAUTH.get("client_secret", "")
-TOKEN_URL = GOOGLE_OAUTH.get("token_url", "")
-REDIRECT_URI = GOOGLE_OAUTH.get("redirect_uri", "")
-GRANT_TYPE = GOOGLE_OAUTH.get("grant_type", "")
+# Load environment variables directly
+GOOGLE_CLIENT_ID = os.getenv("POPEBEATS2TUBE_GOOGLE_OAUTH_CLIENT_ID", "")
+GOOGLE_CLIENT_SECRET = os.getenv("POPEBEATS2TUBE_GOOGLE_OAUTH_CLIENT_SECRET", "")
+TOKEN_URL = os.getenv("POPEBEATS2TUBE_GOOGLE_OAUTH_TOKEN_URL", "")
+REDIRECT_URI = os.getenv("POPEBEATS2TUBE_GOOGLE_OAUTH_REDIRECT_URI", "")
+GRANT_TYPE = os.getenv("POPEBEATS2TUBE_GOOGLE_OAUTH_GRANT_TYPE", "")
+
 
 def verify_google_token(token: str):
     """

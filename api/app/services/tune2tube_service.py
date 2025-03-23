@@ -1,23 +1,18 @@
+import os
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
 from google.oauth2.credentials import Credentials
 
-from app.logging.logging_setup import logger
-from app.services.config_mgmt_service import load_config
+from app.logger.logging_setup import logger
 
-# Load configuration
-config = load_config()
+# Load environment variables directly
+YOUTUBE_SERVICE_NAME = os.getenv("POPEBEATS2TUBE_YOUTUBE_ACCESS_SERVICE_NAME", "")
+YOUTUBE_SERVICE_VERSION = os.getenv("POPEBEATS2TUBE_YOUTUBE_ACCESS_SERVICE_VERSION", "")
 
-# Extract FFmpeg and FFprobe paths from configuration
-YOUTUBE_SERVICE_NAME = config.get("youtube_access", {}).get("service_name", "")
-YOUTUBE_SERVICE_VERSION = config.get("youtube_access", {}).get("service_version", "")
-
-GOOGLE_OAUTH = config.get("google_oauth", {})
-
-GOOGLE_CLIENT_ID = GOOGLE_OAUTH.get("client_id", "")
-GOOGLE_CLIENT_SECRET = GOOGLE_OAUTH.get("client_secret", "")
-TOKEN_URL = GOOGLE_OAUTH.get("token_url", "")
+GOOGLE_CLIENT_ID = os.getenv("POPEBEATS2TUBE_GOOGLE_OAUTH_CLIENT_ID", "")
+GOOGLE_CLIENT_SECRET = os.getenv("POPEBEATS2TUBE_GOOGLE_OAUTH_CLIENT_SECRET", "")
+TOKEN_URL = os.getenv("POPEBEATS2TUBE_GOOGLE_OAUTH_TOKEN_URL", "")
 
 def upload_video(access_token, refresh_token, video_file, video_title, description, category, license, embeddable, privacy_status="unlisted", tags=None):
     logger.debug("Initializing YouTube upload...")

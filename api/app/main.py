@@ -1,14 +1,14 @@
+from dotenv import load_dotenv
 from fastapi import FastAPI
+from fastapi.concurrency import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.routing import APIRouter
 from app.endpoints.schedule_tune_endpoint import schedule_tune_router
-from app.endpoints.config_mgmt_endpoint import config_mgmt_router
 from app.endpoints.auth_endpoint import auth_router
 from app.endpoints.instant_tune_endpoint import instant_upload_router
 from app.endpoints.user_mgmt_endpoint import user_mgmt_router
 from app.auth_dependencies import custom_openapi
-from app.services.config_mgmt_service import load_config
-from app.logging.logging_setup import logger
+from app.logger.logging_setup import logger
 from app.utils.http_response_util import (
     not_found_handler,
     forbidden_handler,
@@ -17,11 +17,18 @@ from app.utils.http_response_util import (
     internal_server_error_handler
 )
 
+
+# Load environment variables from .env file (if available)
+load_dotenv()
+
 # Log application initialization
 logger.debug("Initializing the application...")
 
-# Load configuration during startup
-CONFIG = load_config()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.debug("Application has started.")
+    yield
+    logger.debug("Application is stopping.")
 
 # Create FastAPI app instance
 app = FastAPI()
@@ -33,8 +40,8 @@ app._original_openapi = app.openapi
 app.openapi = lambda: custom_openapi(app)
 
 origins = [
-    "http://localhost:3000",  # Your React frontend
-    "http://127.0.0.1:3000",  # Alternative localhost format
+    "http://localhost:4001",  # Your React frontend
+    "http://127.0.0.1:4001",  # Alternative localhost format
     # Add more origins as needed
 ]
 
@@ -59,7 +66,6 @@ api_router = APIRouter(prefix="/api")
 
 # Include routers
 api_router.include_router(schedule_tune_router, prefix="/scheduled-tune", tags=["scheduled-tune"])
-api_router.include_router(config_mgmt_router, prefix="/config-management", tags=["config-management"])
 api_router.include_router(auth_router, prefix="/auth", tags=["auth"])
 api_router.include_router(instant_upload_router, prefix="/instant-tune", tags=["instant-tune"])
 api_router.include_router(user_mgmt_router, prefix="/user-mgmt", tags=["user-mgmt"])
@@ -73,12 +79,3 @@ app.add_exception_handler(403, forbidden_handler)
 app.add_exception_handler(401, unauthorized_handler)
 app.add_exception_handler(400, bad_request_handler)
 app.add_exception_handler(500, internal_server_error_handler)
-
-# Add startup and shutdown event handlers
-@app.on_event("startup")
-async def startup_event():
-    logger.debug("Application has started.")
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    logger.debug("Application is stopping.")

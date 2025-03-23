@@ -24,10 +24,9 @@ Functions:
 import os
 import shutil
 from fastapi import UploadFile
-from app.services.config_mgmt_service import load_config
 from app.utils.file_util import generate_file_path_windows, validate_and_create_path
 import mimetypes
-from app.logging.logging_setup import logger
+from app.logger.logging_setup import logger
 
 
 # Function to transfer multiple files

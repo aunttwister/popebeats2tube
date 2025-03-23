@@ -34,7 +34,7 @@ from sqlalchemy.orm import Session
 from app.db.db import Tune
 from app.dto import TuneDto
 from app.services.file_transfer_service import transfer_files
-from app.logging.logging_setup import logger
+from app.logger.logging_setup import logger
 from app.utils.file_util import base64_to_file, delete_directory
 
 

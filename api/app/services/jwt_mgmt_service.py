@@ -24,19 +24,17 @@ Functions:
 """
 
 from datetime import datetime, timedelta, timezone
+import os
 from uuid import UUID
 import jwt
 from jose import jwt, JWTError, ExpiredSignatureError
 from fastapi import HTTPException
-from app.services.config_mgmt_service import load_config
-from app.logging.logging_setup import logger
+from app.logger.logging_setup import logger
 
-# Load configuration values
-CONFIG = load_config()
-AUTH = CONFIG.get("local_auth", {})
-SECRET_KEY = AUTH.get("jwt_secret", "")
-ALGORITHM = AUTH.get("algorithm", "")
-JWT_EXPIRATION_TIME = AUTH.get("exp_time", "")
+# Load environment variables directly
+SECRET_KEY = os.getenv("POPEBEATS2TUBE_LOCAL_AUTH_JWT_SECRET", "")
+ALGORITHM = os.getenv("POPEBEATS2TUBE_LOCAL_AUTH_ALGORITHM", "")
+JWT_EXPIRATION_TIME = os.getenv("POPEBEATS2TUBE_LOCAL_AUTH_EXP_TIME", "")
 
 
 def create_jwt(user_id: UUID) -> str:

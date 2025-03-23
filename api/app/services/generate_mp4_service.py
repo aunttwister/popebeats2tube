@@ -1,17 +1,12 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 import os
 import re
 import subprocess
-from app.logging.logging_setup import logger
+from app.logger.logging_setup import logger
 
-from app.services.config_mgmt_service import load_config
-
-# Load configuration
-config = load_config()
-
-# Extract FFmpeg and FFprobe paths from configuration
-FFMPEG_PATH = config.get("ffmpeg", {}).get("path", "ffmpeg")
-FFPROBE_PATH = config.get("ffmpeg", {}).get("probe_path", "ffprobe")
+# Load FFmpeg paths from environment variables
+FFMPEG_PATH = os.getenv("POPEBEATS2TUBE_FFMPEG_PATH", "ffmpeg")
+FFPROBE_PATH = os.getenv("POPEBEATS2TUBE_FFMPEG_PROBE_PATH", "ffprobe")
 
 def generate_video(audio_path, image_path, output_path, video_title) -> str:
     """

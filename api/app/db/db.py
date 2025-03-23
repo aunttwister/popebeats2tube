@@ -1,29 +1,22 @@
 from datetime import datetime, timezone
+import os
 from typing import Generator
 import uuid
 import subprocess
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, ForeignKey, text
+from sqlalchemy import create_engine, Column, Integer, String, Boolean, ForeignKey, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session, relationship
-from sqlalchemy.dialects.mysql import TIMESTAMP
-from sqlalchemy import event
 from app.db.custom_types import UtcDateTime
-from app.services.config_mgmt_service import load_config
-from app.logging.logging_setup import logger
-
-# Load configuration
-CONFIG = load_config()
-DATABASE = CONFIG.get("db", "")
-CONN_STR = DATABASE.get("conn_str", "")
+from app.logger.logging_setup import logger
 
 # MySQL database connection URL
-SQLALCHEMY_DATABASE_URL = CONN_STR
+SQLALCHEMY_DATABASE_URL = os.getenv("POPEBEATS2TUBE_DB_CONN_STR")
 
 # Create a database engine
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
     pool_pre_ping=True,  # Helps detect and recycle stale connections
-    pool_size=5,         # Maintain a pool of connections
+    pool_size=10,         # Maintain a pool of connections
     max_overflow=10      # Maximum overflow connections beyond pool size
 )
 

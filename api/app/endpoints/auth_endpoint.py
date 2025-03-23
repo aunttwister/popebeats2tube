@@ -1,17 +1,18 @@
 from datetime import datetime, timedelta, timezone
+import os
 from fastapi import APIRouter, Depends, HTTPException, Request
 from requests import Session
 from app.db.db import get_db_session
 from app.dto import AuthRequestDto
 from app.services.jwt_mgmt_service import create_jwt
-from app.repositories.user_mgmt_repository import persist_credentials, verify_user_email
+from app.repositories.user_mgmt_repository import persist_credentials, verify_user_email, verify_user_id
 from app.services.google_oauth_service import get_google_oauth_credentials, verify_google_token, refresh_google_access_token
-from app.services.config_mgmt_service import load_config
-from app.logging.logging_setup import logger
+from app.logger.logging_setup import logger
 import httpx
 
 # Load configuration
-config = load_config()
+CLIENT_ID = os.getenv("POPEBEATS2TUBE_GOOGLE_OAUTH_CLIENT_ID")  
+SCOPES = os.getenv("POPEBEATS2TUBE_GOOGLE_OAUTH_SCOPES")  
 
 auth_router = APIRouter()
 
@@ -42,10 +43,10 @@ async def google_auth(auth_request: AuthRequestDto):
     if not user.youtube_refresh_token or not user.youtube_token_expiry:
         oauth_url = (
             f"https://accounts.google.com/o/oauth2/v2/auth?"
-            f"client_id={config['google_oauth']['client_id']}"
+            f"client_id={CLIENT_ID}"
             f"&redirect_uri=http://localhost:3000/auth/google/callback"
             f"&response_type=code"
-            f"&scope={' '.join(config['google_oauth']['scopes'])}"
+            f"&scope={SCOPES}"
             f"&access_type=offline"
         )
         logger.debug(f"User needs to authenticate via Google OAuth.")
@@ -118,11 +119,11 @@ async def refresh_auth_token(request: Request, db: Session = Depends(get_db_sess
     """
     # Log incoming request content
     request_body = await request.json()
-    user_email = request_body.get("user_email")
+    user_id = str(request_body.get("user_id"))
     logger.debug("Starting access token refresh process.")
-    logger.info(f"Starting access token refresh process for user {user_email}.")
+    logger.info(f"Starting access token refresh process for user {user_id}.")
     
-    user = verify_user_email(user_email)
+    user = verify_user_id(user_id)
     if not user or not user.youtube_refresh_token:
         logger.error("Invalid user or missing refresh token.")
         raise HTTPException(status_code=401, detail="Invalid user or missing refresh token.")

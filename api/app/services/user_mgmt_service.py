@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from fastapi import HTTPException
 from app.db.db import User
 from app.dto import UserCreateDTO
-from app.logging.logging_setup import logger
+from app.logger.logging_setup import logger
 
 def create_user_in_db(user_dto: UserCreateDTO,
                       db: Session) -> dict:

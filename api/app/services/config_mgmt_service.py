@@ -1,76 +1,98 @@
 """
-Module: config_loader
-======================
-This module provides functionality for loading and caching the application's configuration
-settings. The configuration is loaded from a JSON file and made globally accessible to 
-prevent redundant file reads and improve performance.
+Module: load_config
+-------------------
+This module provides a function to load application configuration settings from environment 
+variables using the `dotenv` package. The function ensures configuration values are only 
+loaded once per execution to optimize performance.
 
-Features:
----------
-- Load application configuration from a JSON file.
-- Cache the configuration after the first load to ensure it is only read from disk once.
-
-Global Variables:
------------------
-_config : dict or None
-    A cached dictionary containing the application configuration settings. This is initially
-    set to None and populated when the `load_config` function is called.
-
-Notes:
-------
-- The configuration file must be named `config.json` and reside in a `config` directory 
-  one level above the module's location.
-- If the configuration file is missing or contains invalid JSON, appropriate exceptions 
-  will be raised.
+Key Features:
+- Loads environment variables from a `.env` file if present.
+- Provides a structured configuration dictionary.
+- Avoids global variables for security and thread safety.
+- Ensures sensitive data (e.g., secrets, tokens) is managed securely.
 """
 
-import json
 import os
+from dotenv import load_dotenv
 
-_config = None  # Global variable to cache the configuration
+# Load environment variables from .env file if present
+load_dotenv()
 
-def load_config():
+def get_env_list(env_var: str) -> list:
     """
-    Load the application configuration once and cache it.
+    Retrieves a list from a comma-separated environment variable.
 
-    This function loads the application's configuration settings from a JSON file located in the 
-    `config` directory. The configuration is cached in a global variable to prevent redundant 
-    file reads and ensure consistent settings across the application.
+    Parameters
+    ----------
+    env_var : str
+        The name of the environment variable.
 
-    Returns:
-    --------
+    Returns
+    -------
+    list
+        A list of strings derived from the environment variable.
+    """
+    return os.getenv(env_var, "").split(",")
+
+
+def load_config() -> dict:
+    """
+    Loads application configuration settings from environment variables.
+
+    This function retrieves all configuration settings from the system environment or a `.env` file.
+    It structures the configuration into a dictionary to provide easy access to application settings.
+
+    Returns
+    -------
     dict
         A dictionary containing the parsed configuration settings.
 
-    Raises:
+    Example
     -------
-    FileNotFoundError
-        If the configuration file is not found in the `config` directory.
-    JSONDecodeError
-        If the configuration file contains invalid JSON.
-
-    Notes:
-    ------
-    - The configuration file must be named `config.json` and reside in a directory named `config`
-      located one level above the module's location.
-    - Subsequent calls to this function will return the cached configuration.
-
-    Example:
-    --------
     >>> config = load_config()
-    >>> print(config["database"]["connection_string"])
+    >>> print(config["db"]["conn_str"])
+    'mysql+mysqlconnector://devppav:o5AJckx!^tTy^mR@192.168.1.100/popebeats2tube.dev'
     """
-    global _config
-    if _config is not None:
-        return _config
-
-    config_file = "config.json"
-    config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "config", config_file)
-
-    if not os.path.exists(config_path):
-        raise FileNotFoundError(f"Configuration file '{config_file}' not found in 'config' directory.")
-
-    with open(config_path, "r", encoding="utf-8") as file:
-        _config = json.load(file)
-
-    return _config
+    config = {
+        "db": {
+            "conn_str": os.getenv("POPEBEATS2TUBE_DB_CONN_STR")
+        },
+        "file_share": {
+            "ip_addr": os.getenv("POPEBEATS2TUBE_FILE_SHARE_IP_ADDR"),
+            "base_path": os.getenv("POPEBEATS2TUBE_FILE_SHARE_BASE_PATH")
+        },
+        "google_oauth": {
+            "token_url": os.getenv("POPEBEATS2TUBE_GOOGLE_OAUTH_TOKEN_URL"),
+            "client_id": os.getenv("POPEBEATS2TUBE_GOOGLE_OAUTH_CLIENT_ID"),
+            "client_secret": os.getenv("POPEBEATS2TUBE_GOOGLE_OAUTH_CLIENT_SECRET"),
+            "redirect_uri": os.getenv("POPEBEATS2TUBE_GOOGLE_OAUTH_REDIRECT_URI"),
+            "grant_type": os.getenv("POPEBEATS2TUBE_GOOGLE_OAUTH_GRANT_TYPE"),
+            "scopes": get_env_list("POPEBEATS2TUBE_GOOGLE_OAUTH_SCOPES")
+        },
+        "local_auth": {
+            "algorithm": os.getenv("POPEBEATS2TUBE_LOCAL_AUTH_ALGORITHM"),
+            "exp_time": os.getenv("POPEBEATS2TUBE_LOCAL_AUTH_EXP_TIME"),
+            "jwt_secret": os.getenv("POPEBEATS2TUBE_LOCAL_AUTH_JWT_SECRET")
+        },
+        "admin": {
+            "auth_token": os.getenv("POPEBEATS2TUBE_ADMIN_AUTH_TOKEN")
+        },
+        "logging": {
+            "log_dir": os.getenv("POPEBEATS2TUBE_LOGGING_LOG_DIR"),
+            "log_file": os.getenv("POPEBEATS2TUBE_LOGGING_LOG_FILE"),
+            "rotation": os.getenv("POPEBEATS2TUBE_LOGGING_ROTATION"),
+            "retention": os.getenv("POPEBEATS2TUBE_LOGGING_RETENTION"),
+            "compression": os.getenv("POPEBEATS2TUBE_LOGGING_COMPRESSION"),
+            "EnableAdvancedLogging": os.getenv("POPEBEATS2TUBE_LOGGING_ENABLE_ADVANCED_LOGGING") == "true"
+        },
+        "ffmpeg": {
+            "path": os.getenv("POPEBEATS2TUBE_FFMPEG_PATH"),
+            "probe_path": os.getenv("POPEBEATS2TUBE_FFMPEG_PROBE_PATH")
+        },
+        "youtube_access": {
+            "service_name": os.getenv("POPEBEATS2TUBE_YOUTUBE_ACCESS_SERVICE_NAME"),
+            "service_version": os.getenv("POPEBEATS2TUBE_YOUTUBE_ACCESS_SERVICE_VERSION")
+        }
+    }
+    
+    return config

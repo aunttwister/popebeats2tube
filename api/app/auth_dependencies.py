@@ -1,17 +1,15 @@
+import os
 from fastapi.openapi.models import OAuthFlows as OAuthFlowsModel
 from fastapi.security import OAuth2
-from fastapi.openapi.models import SecurityScheme as SecuritySchemeModel
 from fastapi import Depends, HTTPException
 import jwt
 from app.services.jwt_mgmt_service import extract_user_id_from_token
-from app.services.config_mgmt_service import load_config
-from app.logging.logging_setup import logger
+from app.logger.logging_setup import logger
 
 # Load configuration
-CONFIG = load_config()
 TOKEN_URL = "/auth/token"
-SECRET_KEY = CONFIG["local_auth"]["jwt_secret"]
-ALGORITHM = CONFIG["local_auth"]["algorithm"]
+SECRET_KEY = os.getenv("POPEBEATS2TUBE_LOCAL_AUTH_JWT_SECRET")  
+ALGORITHM = os.getenv("POPEBEATS2TUBE_LOCAL_AUTH_ALGORITHM")  
 
 
 class OAuth2PasswordBearerWithScopes(OAuth2):

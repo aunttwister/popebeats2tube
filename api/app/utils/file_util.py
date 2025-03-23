@@ -2,17 +2,13 @@ import base64
 import io
 import os
 import shutil
-from app.logging.logging_setup import logger
+from app.logger.logging_setup import logger
 
 from fastapi import UploadFile
 
-from app.services.config_mgmt_service import load_config
 
-# Load configuration
-CONFIG = load_config()
-FILE_SHARE_CONFIG = CONFIG.get("file_share", {})
-IP_ADDR = FILE_SHARE_CONFIG.get("ip_addr", "")
-BASE_PATH = FILE_SHARE_CONFIG.get("base_path", "")
+IP_ADDR = os.getenv("POPEBEATS2TUBE_FILE_SHARE_IP_ADDR", "")
+BASE_PATH = os.getenv("POPEBEATS2TUBE_FILE_SHARE_BASE_PATH", "")
 
 def generate_file_path_windows(
     user_id: str,

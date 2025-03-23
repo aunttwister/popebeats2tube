@@ -1,19 +1,15 @@
+import os
 from fastapi import APIRouter, HTTPException, Depends, Header
 from sqlalchemy.orm import Session
 
 from app.db.db import get_db_session
 from app.dto import UserCreateDTO
-from app.logging.logging_setup import logger
-from app.services.config_mgmt_service import load_config
+from app.logger.logging_setup import logger
 from app.repositories.user_mgmt_repository import create_user_in_db
 
 user_mgmt_router = APIRouter()
 
-# Load configuration
-CONFIG = load_config()
-ADMIN = CONFIG.get("admin", {})
-ADMIN_API_KEY = ADMIN.get("auth_token", "")
-# ADMIN_API_KEY = os.getenv("ADMIN_API_KEY")  # Load the API key from the environment
+ADMIN_API_KEY = os.getenv("POPEBEATS2TUBE_ADMIN_AUTH_TOKEN")  # Load the API key from the environment
 
 def verify_admin_api_key(admin_api_key: str = Header(...)):
     """

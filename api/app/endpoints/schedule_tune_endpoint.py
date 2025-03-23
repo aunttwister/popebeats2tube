@@ -45,7 +45,7 @@ from app.repositories.schedule_tune_repository import (
     update_tune,
     delete_tune,
 )
-from app.logging.logging_setup import logger
+from app.logger.logging_setup import logger
 
 schedule_tune_router = APIRouter(dependencies=[Depends(get_current_user)])
 
