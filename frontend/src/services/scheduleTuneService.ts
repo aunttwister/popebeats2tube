@@ -2,6 +2,7 @@ import apiClient from './apiClient.ts';
 import { TuneDTO } from '../types/dto';
 
 export const getSchedules = async (page = 1, limit = 10) => {
+  console.log(`${process.env.REACT_APP_API_BASE_URL}`)
   const response = await apiClient.get('/scheduled-tune', {
     params: { page: Number(page), limit: Number(limit) },
   });

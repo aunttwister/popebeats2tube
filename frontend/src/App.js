@@ -42,7 +42,7 @@ function App() {
         const token = credentialResponse.credential;
         setIsLoading(true);
     
-        fetch('http://localhost:8000/api/auth/google', {
+        fetch(`${process.env.REACT_APP_API_BASE_URL}/auth/google`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ token }),

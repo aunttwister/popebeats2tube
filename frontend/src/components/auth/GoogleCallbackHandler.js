@@ -19,7 +19,7 @@ const GoogleCallbackHandler = ({ setIsAuthenticated }) => {
         }
 
         if (authCode) {
-            fetch('http://localhost:8000/api/auth/google/callback', {
+            fetch(`${process.env.REACT_APP_API_BASE_URL}/auth/google/callback`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ code: authCode, user_id }),

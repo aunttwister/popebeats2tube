@@ -6,23 +6,46 @@ export const setToken = (token, expiresIn, userId) => {
 };
 
 export const getToken = async () => {
-    const token = localStorage.getItem('jwt');
-    const expiryTime = parseInt(localStorage.getItem('jwtExpiry'), 10);
+    try {
+        const token = localStorage.getItem('jwt');
+        const expiryTime = parseInt(localStorage.getItem('jwtExpiry'), 10);
+        const now = Date.now();
 
-    if (Date.now() >= expiryTime || isNaN(expiryTime)) {
-        await refreshToken();
-        return localStorage.getItem('jwt');
-    } else {
-        return token;
+        // Debug logs
+        console.log("Current timestamp:", now);
+        console.log("Current ISO timestamp:", new Date(now).toISOString());
+        console.log("Expiry timestamp:", expiryTime);
+
+        if (isNaN(expiryTime)) {
+            console.error("Invalid expiry time. Refreshing token...");
+        } else if (now >= expiryTime) {
+            console.warn("Token has expired. Refreshing token...");
+        } else {
+            console.log("Token is still valid.");
+        }
+
+        // Check if the token is expired or expiryTime is invalid
+        if (isNaN(expiryTime) || now >= expiryTime) {
+            await refreshToken();
+            return localStorage.getItem('jwt'); // Return the refreshed token
+        }
+
+        return token; // Return the existing token if valid
+    } catch (error) {
+        console.error("Error in getToken:", error);
+        throw error; // Re-throw the error to handle it upstream
     }
 };
 
 export const refreshToken = async () => {
-    const email = localStorage.getItem('userEmail');
-    const response = await fetch('http://localhost:8000/api/auth/token-refresh', {
+    const userId = localStorage.getItem('userId');
+    console.log(`${process.env.REACT_APP_API_BASE_URL}`)
+    const apiUrl = `${process.env.REACT_APP_API_BASE_URL}/auth/token-refresh`;
+
+    const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_email: email }),
+        body: JSON.stringify({ user_id: userId }),
     });
 
     if (!response.ok) throw new Error('Failed to refresh token.');
