@@ -25,6 +25,7 @@ import os
 import sys
 from loguru import logger
 from pathlib import Path
+from app.settings.env_settings import LOGGING_LOG_DIR, LOGGING_LOG_FILE, LOGGING_ROTATION, LOGGING_RETENTION, LOGGING_COMPRESSION, LOGGING_ENABLE_ADVANCED_LOGGING
 
 def setup_logging():
     """
@@ -46,12 +47,12 @@ def setup_logging():
     :return: A logger object configured with the specified settings.
     """
 
-    log_dir = Path(os.getenv("POPEBEATS2TUBE_LOGGING_LOG_DIR", "./logs"))
-    log_file = os.getenv("POPEBEATS2TUBE_LOGGING_LOG_FILE", "app.log")
-    rotation = os.getenv("POPEBEATS2TUBE_LOGGING_ROTATION", "1 day")
-    retention = os.getenv("POPEBEATS2TUBE_LOGGING_RETENTION", "7 days")
-    compression = os.getenv("POPEBEATS2TUBE_LOGGING_COMPRESSION", "zip")
-    enable_advanced_logging = os.getenv("POPEBEATS2TUBE_LOGGING_ENABLE_ADVANCED_LOGGING", "false").lower() == "true"
+    log_dir = Path(LOGGING_LOG_DIR)
+    log_file = LOGGING_LOG_FILE
+    rotation = LOGGING_ROTATION
+    retention = LOGGING_RETENTION
+    compression = LOGGING_COMPRESSION
+    enable_advanced_logging = LOGGING_ENABLE_ADVANCED_LOGGING.lower() == "true"
 
     # Ensure log directory exists
     log_dir.mkdir(parents=True, exist_ok=True)

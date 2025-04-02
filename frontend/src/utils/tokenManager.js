@@ -10,24 +10,17 @@ export const getToken = async () => {
         const token = localStorage.getItem('jwt');
         const expiryTime = parseInt(localStorage.getItem('jwtExpiry'), 10);
         const now = Date.now();
+        if (token == null)
+            return;
 
-        // Debug logs
-        console.log("Current timestamp:", now);
-        console.log("Current ISO timestamp:", new Date(now).toISOString());
-        console.log("Expiry timestamp:", expiryTime);
-
-        if (isNaN(expiryTime)) {
+        if (isNaN(expiryTime) || now >= expiryTime) {
             console.error("Invalid expiry time. Refreshing token...");
+            await refreshToken();
+            return localStorage.getItem('jwt'); // Return the refreshed token
         } else if (now >= expiryTime) {
             console.warn("Token has expired. Refreshing token...");
         } else {
             console.log("Token is still valid.");
-        }
-
-        // Check if the token is expired or expiryTime is invalid
-        if (isNaN(expiryTime) || now >= expiryTime) {
-            await refreshToken();
-            return localStorage.getItem('jwt'); // Return the refreshed token
         }
 
         return token; // Return the existing token if valid
@@ -50,5 +43,5 @@ export const refreshToken = async () => {
 
     if (!response.ok) throw new Error('Failed to refresh token.');
     const data = await response.json();
-    setToken(data.jwt, data.expires_in);
+    setToken(data.jwt, data.expires_in, data.user_id);
 };

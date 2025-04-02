@@ -60,3 +60,14 @@ Thumbs.db
 # Optional: Lint and Debug files
 eslintcache
 *.tgz
+api/.env.prod
+api/.env.staging
+FILE_SHARE/pngimg.com - mario_PNG75.png
+FILE_SHARE/random-acoustic-electronic-guitar-136427.mp3
+FILE_SHARE/1db24f33_baee_44eb_82f3_2396318bafd4/test/pngimg.com - mario_PNG75.png
+FILE_SHARE/1db24f33_baee_44eb_82f3_2396318bafd4/test/random-acoustic-electronic-guitar-136427.mp3
+FILE_SHARE/1db24f33_baee_44eb_82f3_2396318bafd4/test/test.mp4
+frontend/.env.development
+frontend/.env.prod
+frontend/.env.staging
+frontend/nginx.conf

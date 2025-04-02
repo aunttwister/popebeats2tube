@@ -1,18 +1,126 @@
+from datetime import datetime, timedelta, timezone
+from fastapi import HTTPException
 from google.auth.exceptions import GoogleAuthError
 from google.oauth2 import id_token
 from google.auth.transport import requests    
 import httpx
 
+from app.dto import AuthRequestDto
 from app.logger.logging_setup import logger
 
-import os
+from app.repositories.user_mgmt_repository import persist_credentials, verify_user_email, verify_user_id
+from app.settings.env_settings import GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET, GOOGLE_OAUTH_TOKEN_URL, GOOGLE_OAUTH_REDIRECT_URI, GOOGLE_OAUTH_GRANT_TYPE
+from app.utils.auth_utils import construct_oauth_url, generate_jwt_response, handle_token_exchange_errors
 
-# Load environment variables directly
-GOOGLE_CLIENT_ID = os.getenv("POPEBEATS2TUBE_GOOGLE_OAUTH_CLIENT_ID", "")
-GOOGLE_CLIENT_SECRET = os.getenv("POPEBEATS2TUBE_GOOGLE_OAUTH_CLIENT_SECRET", "")
-TOKEN_URL = os.getenv("POPEBEATS2TUBE_GOOGLE_OAUTH_TOKEN_URL", "")
-REDIRECT_URI = os.getenv("POPEBEATS2TUBE_GOOGLE_OAUTH_REDIRECT_URI", "")
-GRANT_TYPE = os.getenv("POPEBEATS2TUBE_GOOGLE_OAUTH_GRANT_TYPE", "")
+async def handle_google_auth(auth_request: AuthRequestDto):
+    """
+    Handles Google OAuth login and checks for existing credentials.
+    """
+    # Log incoming request content
+    logger.debug("Received Google OAuth login request.")
+    logger.info(f"Received Google OAuth login request with content: {auth_request.model_dump_json()}")
+
+    try:
+        idinfo = verify_google_token(auth_request.token)
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Unauthorized access. Message: {e}.")
+
+    email = idinfo.get("email")
+    if not email:
+        logger.error("Google token is missing email.")
+        raise HTTPException(status_code=401, detail="Invalid Google Token: Missing email.")
+
+    user = verify_user_email(email)
+    if not user:
+        raise HTTPException(status_code=401, detail=f"User with email '{email}' is not authorized.")
+    # If credentials are missing, provide an OAuth URL for the frontend to redirect
+    if not user.youtube_refresh_token or not user.youtube_token_expiry:
+        oauth_url = construct_oauth_url()
+        logger.debug(f"User needs to authenticate via Google OAuth.")
+        logger.info(f"User {email} needs to authenticate via Google OAuth.")
+        return {"redirect": True, "oauth_url": oauth_url, "user_id": user.id}
+
+    return generate_jwt_response(user.id)
+
+async def handle_google_callback(request_body: dict, db):
+    """
+    Handles the Google OAuth callback to exchange the authorization code for tokens.
+    """
+    logger.debug("Received Google OAuth callback request.")
+    logger.info(f"Received Google OAuth callback request with content: {request_body}")
+    try:
+        # Parse JSON data from the incoming request
+        auth_code = request_body.get("code")
+        user_id = request_body.get("user_id")
+        error_message = request_body.get("error")
+
+        if error_message:
+            logger.error(f"Error during Google OAuth callback: {error_message}")
+            raise HTTPException(status_code=500, detail=error_message)
+
+        # Exchange authorization code for tokens
+        token_response = await get_google_oauth_credentials(auth_code)
+        logger.debug("Successfully exchanged authorization code for tokens.")
+
+        handle_token_exchange_errors(token_response)
+
+        # Extract tokens and calculate expiry
+        access_token = token_response["access_token"]
+        refresh_token = token_response.get("refresh_token")
+        expires_in = token_response["expires_in"]
+
+        token_expiry = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
+
+        # Persist credentials in the database
+        user = persist_credentials(user_id, access_token, refresh_token, token_expiry, db)
+        
+        return generate_jwt_response(user.id)
+
+    except httpx.HTTPStatusError as http_err:
+        raise HTTPException(
+            status_code=http_err.response.status_code,
+            detail=f"HTTP error occurred: {http_err.response.text}"
+        )
+    except ValueError as ve:
+        logger.error(f"ValueError during Google OAuth callback: {ve}")
+        raise HTTPException(status_code=404, detail=str(ve))
+    except Exception as e:
+        logger.critical(f"Unhandled exception during Google OAuth callback: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
+
+async def handle_token_refresh(user_id: str, db):
+    """
+    Refreshes the Google OAuth access token using the refresh token.
+    """
+    # Log incoming request content
+    logger.debug("Starting access token refresh process.")
+    logger.info(f"Starting access token refresh process for user {user_id}.")
+    
+    user = verify_user_id(user_id)
+    if not user:
+        logger.error("Invalid user.")
+        raise HTTPException(status_code=401, detail="Invalid user.")
+    if not user.youtube_refresh_token:
+        logger.error("Missing refresh token.")
+        raise HTTPException(status_code=401, detail="Missing refresh token.")
+    try:
+        if (datetime.now(timezone.utc) > user.youtube_token_expiry):
+            token_response = await refresh_google_access_token(user.youtube_refresh_token)
+            access_token = token_response["access_token"]
+        
+            refresh_token = token_response.get("refresh_token")
+            if refresh_token is None:
+                logger.warning("Google didn't provide a new refresh token. Continueing with the old one..")
+                refresh_token = user.youtube_refresh_token
+                new_expiry = datetime.now(timezone.utc) + timedelta(seconds=token_response["expires_in"])
+                logger.info(f"Google Api access token refresh successful. New expiry date is {new_expiry}.")
+            # Update the user's token details in the database
+            user = persist_credentials(user.id, access_token, refresh_token, new_expiry, db)
+
+        return generate_jwt_response(user.id)
+    except Exception as e:
+        logger.error(f"Failed to refresh token: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to refresh token: {str(e)}")
 
 
 def verify_google_token(token: str):
@@ -36,7 +144,7 @@ def verify_google_token(token: str):
     """
     logger.debug("Verifying Google OAuth2 token.")
     try:
-        idinfo = id_token.verify_oauth2_token(token, requests.Request(), GOOGLE_CLIENT_ID)
+        idinfo = id_token.verify_oauth2_token(token, requests.Request(), GOOGLE_OAUTH_CLIENT_ID)
         logger.debug("Token verification successful.")
         logger.info(f"Token verified for user with email: {idinfo.get('email')}")
         return idinfo
@@ -64,11 +172,11 @@ async def get_google_oauth_credentials(auth_code: str):
         If the HTTP request to exchange the authorization code fails.
     """
     logger.debug("Preparing data for Google OAuth token exchange.")
-    token_url = TOKEN_URL
-    client_id = GOOGLE_CLIENT_ID
-    client_secret = GOOGLE_CLIENT_SECRET
-    redirect_uri = REDIRECT_URI
-    grant_type = GRANT_TYPE
+    token_url = GOOGLE_OAUTH_TOKEN_URL
+    client_id = GOOGLE_OAUTH_CLIENT_ID
+    client_secret = GOOGLE_OAUTH_CLIENT_SECRET
+    redirect_uri = GOOGLE_OAUTH_REDIRECT_URI
+    grant_type = GOOGLE_OAUTH_GRANT_TYPE
     
     # Prepare data for token exchange
     token_data = {
@@ -115,9 +223,9 @@ async def refresh_google_access_token(refresh_token: str):
     httpx.HTTPStatusError
         If the HTTP request to refresh the token fails.
     """
-    token_url = TOKEN_URL
-    client_id = GOOGLE_CLIENT_ID
-    client_secret = GOOGLE_CLIENT_SECRET
+    token_url = GOOGLE_OAUTH_TOKEN_URL
+    client_id = GOOGLE_OAUTH_CLIENT_ID
+    client_secret = GOOGLE_OAUTH_CLIENT_SECRET
 
     data = {
         "client_id": client_id,

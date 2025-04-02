@@ -6,10 +6,10 @@ from app.db.db import get_db_session
 from app.dto import UserCreateDTO
 from app.logger.logging_setup import logger
 from app.repositories.user_mgmt_repository import create_user_in_db
+from app.settings.env_settings import ADMIN_AUTH_TOKEN
+
 
 user_mgmt_router = APIRouter()
-
-ADMIN_API_KEY = os.getenv("POPEBEATS2TUBE_ADMIN_AUTH_TOKEN")  # Load the API key from the environment
 
 def verify_admin_api_key(admin_api_key: str = Header(...)):
     """
@@ -31,7 +31,7 @@ def verify_admin_api_key(admin_api_key: str = Header(...)):
         403: If the provided API key is invalid.
     """
     logger.debug("Verifying admin API key.")
-    if admin_api_key != ADMIN_API_KEY:
+    if admin_api_key != ADMIN_AUTH_TOKEN:
         logger.error("Invalid admin API key provided.")
         raise HTTPException(status_code=403, detail="Invalid API key")
     logger.debug("Admin API key verification successful.")

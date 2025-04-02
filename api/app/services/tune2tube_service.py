@@ -5,14 +5,7 @@ from googleapiclient.http import MediaFileUpload
 from google.oauth2.credentials import Credentials
 
 from app.logger.logging_setup import logger
-
-# Load environment variables directly
-YOUTUBE_SERVICE_NAME = os.getenv("POPEBEATS2TUBE_YOUTUBE_ACCESS_SERVICE_NAME", "")
-YOUTUBE_SERVICE_VERSION = os.getenv("POPEBEATS2TUBE_YOUTUBE_ACCESS_SERVICE_VERSION", "")
-
-GOOGLE_CLIENT_ID = os.getenv("POPEBEATS2TUBE_GOOGLE_OAUTH_CLIENT_ID", "")
-GOOGLE_CLIENT_SECRET = os.getenv("POPEBEATS2TUBE_GOOGLE_OAUTH_CLIENT_SECRET", "")
-TOKEN_URL = os.getenv("POPEBEATS2TUBE_GOOGLE_OAUTH_TOKEN_URL", "")
+from app.settings.env_settings import YOUTUBE_ACCESS_SERVICE_NAME, YOUTUBE_ACCESS_SERVICE_VERSION, GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET, GOOGLE_OAUTH_TOKEN_URL
 
 def upload_video(access_token, refresh_token, video_file, video_title, description, category, license, embeddable, privacy_status="unlisted", tags=None):
     logger.debug("Initializing YouTube upload...")
@@ -23,9 +16,9 @@ def upload_video(access_token, refresh_token, video_file, video_title, descripti
         credentials = Credentials(
             token=access_token,
             refresh_token=refresh_token,
-            token_uri=TOKEN_URL,
-            client_id=GOOGLE_CLIENT_ID,
-            client_secret=GOOGLE_CLIENT_SECRET
+            token_uri=GOOGLE_OAUTH_TOKEN_URL,
+            client_id=GOOGLE_OAUTH_CLIENT_ID,
+            client_secret=GOOGLE_OAUTH_CLIENT_SECRET
         )
     except Exception as e:
         logger.error(f"Failed to create Credentials object: {e}")
@@ -35,8 +28,8 @@ def upload_video(access_token, refresh_token, video_file, video_title, descripti
     try:
         logger.debug("Building YouTube API client.")
         youtube = build(
-            YOUTUBE_SERVICE_NAME,
-            YOUTUBE_SERVICE_VERSION,
+            YOUTUBE_ACCESS_SERVICE_NAME,
+            YOUTUBE_ACCESS_SERVICE_VERSION,
             credentials=credentials
         )
     except Exception as e:
@@ -44,7 +37,6 @@ def upload_video(access_token, refresh_token, video_file, video_title, descripti
         raise
 
     # Prepare the request body
-    print(category)
     logger.debug("Preparing video upload request body.")
     body = {
         'snippet': {

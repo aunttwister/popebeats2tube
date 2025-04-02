@@ -5,10 +5,7 @@ import shutil
 from app.logger.logging_setup import logger
 
 from fastapi import UploadFile
-
-
-IP_ADDR = os.getenv("POPEBEATS2TUBE_FILE_SHARE_IP_ADDR", "")
-BASE_PATH = os.getenv("POPEBEATS2TUBE_FILE_SHARE_BASE_PATH", "")
+from app.settings.env_settings import FILE_SHARE_IP_ADDR, FILE_SHARE_BASE_PATH
 
 def generate_file_path_windows(
     user_id: str,
@@ -34,17 +31,17 @@ def generate_file_path_windows(
     ValueError
         If `file_type` is not "audio" or "image".
     """
-    if not IP_ADDR or not BASE_PATH:
+    if not FILE_SHARE_IP_ADDR or not FILE_SHARE_BASE_PATH:
             logger.error("File share configuration is invalid.")
             raise ValueError("File share configuration is invalid. Please check 'ip_addr' and 'base_path'.")
     
-    sanitized_base_path = BASE_PATH.replace(':', '$').replace("/", "\\")
+    sanitized_base_path = FILE_SHARE_BASE_PATH.replace(':', '$').replace("/", "\\")
     sanitized_id = user_id.replace("-", "_")
     sanitized_video_title = video_title.replace("/", "_")
-    logger.debug(f"Parameters for file path generation: ip_addr={IP_ADDR}, base_path={sanitized_base_path}, user_id={sanitized_id}, video_title={sanitized_video_title}")
+    logger.debug(f"Parameters for file path generation: ip_addr={FILE_SHARE_IP_ADDR}, base_path={sanitized_base_path}, user_id={sanitized_id}, video_title={sanitized_video_title}")
     # Build the file path
     file_path = os.path.join(
-        f"\\\\{IP_ADDR}",
+        f"\\\\{FILE_SHARE_IP_ADDR}",
         sanitized_base_path,
         sanitized_id,
         sanitized_video_title
@@ -76,17 +73,17 @@ def generate_file_path_non_windows(
     ValueError
         If `file_type` is not "audio" or "image".
     """
-    if not IP_ADDR or not BASE_PATH:
+    if not FILE_SHARE_IP_ADDR or not FILE_SHARE_BASE_PATH:
             logger.error("File share configuration is invalid.")
             raise ValueError("File share configuration is invalid. Please check 'ip_addr' and 'base_path'.")
     
-    sanitized_base_path = BASE_PATH.replace(':', '$')
+    sanitized_base_path = FILE_SHARE_BASE_PATH.replace(':', '$')
     sanitized_id = user_id.replace("-", "_")
     sanitized_video_title = video_title.replace("/", "_")
-    logger.debug(f"Parameters for file path generation: ip_addr={IP_ADDR}, base_path={sanitized_base_path}, user_id={sanitized_id}, video_title={sanitized_video_title}")
+    logger.debug(f"Parameters for file path generation: ip_addr={FILE_SHARE_IP_ADDR}, base_path={sanitized_base_path}, user_id={sanitized_id}, video_title={sanitized_video_title}")
     # Build the file path
     file_path = os.path.join(
-        f"//{IP_ADDR}",
+        f"/{FILE_SHARE_IP_ADDR}",
         sanitized_base_path,
         sanitized_id,
         sanitized_video_title

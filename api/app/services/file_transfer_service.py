@@ -24,9 +24,10 @@ Functions:
 import os
 import shutil
 from fastapi import UploadFile
-from app.utils.file_util import generate_file_path_windows, validate_and_create_path
+from app.utils.file_util import generate_file_path_windows, generate_file_path_non_windows, validate_and_create_path
 import mimetypes
 from app.logger.logging_setup import logger
+from app.settings.env_settings import FILE_SHARE_OS
 
 
 # Function to transfer multiple files
@@ -62,7 +63,10 @@ def transfer_files(files: list[UploadFile], user_id: str, video_title: str) -> s
     logger.debug(f"Starting file transfer for {len(files)} files, user: {user_id}.")
     try:
         # Generate the destination path
-        destination_path = generate_file_path_windows(user_id, video_title)
+        if (FILE_SHARE_OS.lower == "windows"):
+            destination_path = generate_file_path_windows(user_id, video_title)
+        else:
+            destination_path = generate_file_path_non_windows(user_id, video_title)
         logger.info(f"Generated destination path: {destination_path}.")
 
         destination_path = validate_and_create_path(destination_path)

@@ -30,11 +30,7 @@ import jwt
 from jose import jwt, JWTError, ExpiredSignatureError
 from fastapi import HTTPException
 from app.logger.logging_setup import logger
-
-# Load environment variables directly
-SECRET_KEY = os.getenv("POPEBEATS2TUBE_LOCAL_AUTH_JWT_SECRET", "")
-ALGORITHM = os.getenv("POPEBEATS2TUBE_LOCAL_AUTH_ALGORITHM", "")
-JWT_EXPIRATION_TIME = os.getenv("POPEBEATS2TUBE_LOCAL_AUTH_EXP_TIME", "")
+from app.settings.env_settings import LOCAL_AUTH_JWT_SECRET, LOCAL_AUTH_ALGORITHM, LOCAL_AUTH_EXP_TIME
 
 
 def create_jwt(user_id: UUID) -> str:
@@ -65,14 +61,14 @@ def create_jwt(user_id: UUID) -> str:
     logger.debug(f"Starting JWT creation for user ID: {user_id}")
 
     try:
-        expiration = datetime.now() + timedelta(seconds=int(JWT_EXPIRATION_TIME))
+        expiration = datetime.now() + timedelta(seconds=int(LOCAL_AUTH_EXP_TIME))
         payload = {
             "user_id": str(user_id),
             "exp": expiration,
         }
-        token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+        token = jwt.encode(payload, LOCAL_AUTH_JWT_SECRET, algorithm=LOCAL_AUTH_ALGORITHM)
         logger.debug(f"JWT created for user ID: {user_id}")
-        return {"token": token, "expires_in": JWT_EXPIRATION_TIME}
+        return {"token": token, "expires_in": LOCAL_AUTH_EXP_TIME}
     except Exception as e:
         logger.error(f"Failed to create JWT: {str(e)}")
         raise Exception("JWT creation failed. Please check the logs for details.")
@@ -101,7 +97,7 @@ def extract_user_id_from_token(token: str) -> UUID:
     logger.info(f"Starting  current user extraction from token: {token}")
     try:
         logger.debug(f"Decoding JWT...")
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, LOCAL_AUTH_JWT_SECRET, algorithms=[LOCAL_AUTH_ALGORITHM])
         logger.info(f"Decoded JWT: {payload}")
         logger.debug(f"Extracting user_id...")
         user_id = payload.get("user_id")

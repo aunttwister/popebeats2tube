@@ -8,9 +8,6 @@ from app.logger.logging_setup import logger
 
 # Load configuration
 TOKEN_URL = "/auth/token"
-SECRET_KEY = os.getenv("POPEBEATS2TUBE_LOCAL_AUTH_JWT_SECRET")  
-ALGORITHM = os.getenv("POPEBEATS2TUBE_LOCAL_AUTH_ALGORITHM")  
-
 
 class OAuth2PasswordBearerWithScopes(OAuth2):
     def __init__(self, tokenUrl: str, scopes: dict = None):

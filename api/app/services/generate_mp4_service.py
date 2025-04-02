@@ -3,10 +3,7 @@ import os
 import re
 import subprocess
 from app.logger.logging_setup import logger
-
-# Load FFmpeg paths from environment variables
-FFMPEG_PATH = os.getenv("POPEBEATS2TUBE_FFMPEG_PATH", "ffmpeg")
-FFPROBE_PATH = os.getenv("POPEBEATS2TUBE_FFMPEG_PROBE_PATH", "ffprobe")
+from app.settings.env_settings import FFMPEG_PATH, FFMPEG_PROBE_PATH
 
 def generate_video(audio_path, image_path, output_path, video_title) -> str:
     """
@@ -16,8 +13,7 @@ def generate_video(audio_path, image_path, output_path, video_title) -> str:
 
     # Probe audio file for duration
     logger.debug(f"Probing audio file using FFmpeg.")
-    probe_cmd = [FFPROBE_PATH, '-i', audio_path, '-show_format', '-v', 'quiet']
-    print(probe_cmd)
+    probe_cmd = [FFMPEG_PROBE_PATH, '-i', audio_path, '-show_format', '-v', 'quiet']
     try:
         probe_output = subprocess.check_output(probe_cmd, stderr=subprocess.STDOUT)
         logger.info(f"FFProbe output for audio file '{audio_path}': {probe_output.decode()}")

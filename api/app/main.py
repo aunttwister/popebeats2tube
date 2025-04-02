@@ -1,3 +1,4 @@
+import os
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.concurrency import asynccontextmanager
@@ -16,10 +17,6 @@ from app.utils.http_response_util import (
     bad_request_handler,
     internal_server_error_handler
 )
-
-
-# Load environment variables from .env file (if available)
-load_dotenv()
 
 # Log application initialization
 logger.debug("Initializing the application...")
@@ -40,8 +37,8 @@ app._original_openapi = app.openapi
 app.openapi = lambda: custom_openapi(app)
 
 origins = [
-    "http://localhost:4001",  # Your React frontend
-    "http://127.0.0.1:4001",  # Alternative localhost format
+    "http://localhost:3000",  # Your React frontend
+    "http://127.0.0.1:3000",  # Alternative localhost format
     # Add more origins as needed
 ]
 
