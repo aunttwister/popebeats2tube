@@ -33,10 +33,6 @@ from sqlalchemy import case
 from sqlalchemy.orm import Session
 from app.db.db import Tune
 from app.dto import TuneDto
-from app.services.file_transfer_service import transfer_files
-from app.logger.logging_setup import logger
-from app.utils.file_util import base64_to_file, delete_directory
-
 
 
 async def get_tunes(db: Session, user_id: str, page: int, limit: int) -> Tuple[List[TuneDto], int]:
@@ -61,7 +57,6 @@ async def get_tunes(db: Session, user_id: str, page: int, limit: int) -> Tuple[L
     Tuple[List[TuneDto], int]
         A tuple containing the paginated list of tunes and the total count of tunes.
     """
-    logger.debug(f"Fetching tunes from the database for user_id: {user_id}, page: {page}, limit: {limit}")
     try:
         # Fetch total count of tunes for pagination
         total_count = db.query(Tune).filter(Tune.user_id == user_id).count()
@@ -82,7 +77,6 @@ async def get_tunes(db: Session, user_id: str, page: int, limit: int) -> Tuple[L
             .all()
         )
 
-        logger.debug(f"Fetched {len(tunes)} tunes for user_id: {user_id}")
         return [
             TuneDto.model_validate(
                 {
@@ -93,10 +87,14 @@ async def get_tunes(db: Session, user_id: str, page: int, limit: int) -> Tuple[L
             for tune in tunes
         ], total_count
     except Exception as e:
-        logger.error(f"Failed to fetch tunes for user_id {user_id}: {str(e)}")
         raise Exception("Error occurred while fetching tunes.")
     
-async def create_tunes_in_batch(tunes: List[TuneDto], current_user_id: str, db: Session) -> List[TuneDto]:
+    
+async def get_tune_by_id(tune_id: int, db: Session) -> Optional[Tune]:
+    return db.query(Tune).filter(Tune.id == tune_id).first()
+
+
+async def insert_tunes_batch(tunes: List[Tune], db: Session) -> List[TuneDto]:
     """
     Create multiple tunes in a single database transaction.
 
@@ -118,42 +116,14 @@ async def create_tunes_in_batch(tunes: List[TuneDto], current_user_id: str, db: 
     - INFO: Details of the created tunes.
     - ERROR: Failures during the batch operation.
     """
-    logger.debug(f"Starting batch creation for {len(tunes)} tunes.")
     created_tunes = []
     try:
-        for tune in tunes:
-            image_file = base64_to_file(tune.img_file_base64, tune.video_title + '.' + tune.img_type)
-            audio_file = base64_to_file(tune.img_file_base64, tune.video_title + '.' + tune.audio_type)
-            
-            base_destination_path = transfer_files([image_file, audio_file], current_user_id, tune.video_title)
-            
-            logger.debug(f"File transfers completed for {tune.video_title}.")
-
-            new_tune = Tune(
-                upload_date=tune.upload_date,
-                executed=tune.executed,
-                video_title=tune.video_title,
-                base_dest_path=base_destination_path,
-                img_name=tune.img_name,
-                img_type=tune.img_type,
-                audio_name=tune.audio_name,
-                audio_type=tune.audio_type,
-                date_created=datetime.now(timezone.utc),
-                user_id=current_user_id,
-                privacy_status=tune.privacy_status,
-                embeddable=tune.embeddable,
-                license=tune.license,
-                category=tune.category,
-                tags=json.dumps(tune.tags),
-                video_description=tune.video_description
-            )
-            db.add(new_tune)
-            created_tunes.append(new_tune)
-
+        db.add_all(tunes)
         db.commit()
+
+        created_tunes = tunes
         for tune in created_tunes:
             db.refresh(tune)
-        logger.debug("Batch creation transaction committed successfully.")
         return [
             TuneDto.model_validate(
                 {
@@ -165,11 +135,19 @@ async def create_tunes_in_batch(tunes: List[TuneDto], current_user_id: str, db: 
         ]
     except Exception as e:
         db.rollback()
-        logger.error(f"Failed to create tunes in batch: {str(e)}")
-        raise Exception("Error occurred during batch creation of tunes.")
+        raise Exception(f"Error occurred during batch creation of tunes: {str(e)}")
 
 
-async def update_tune(tune_id: int, tune: TuneDto, db: Session) -> Optional[TuneDto]:
+async def delete_tune_by_id(tune_id: int, db: Session) -> bool:
+    tune = db.query(Tune).filter(Tune.id == tune_id).first()
+    if not tune:
+        return False
+
+    db.delete(tune)
+    db.commit()
+    return True
+
+async def update_tune_fields(tune_id: int, tune: TuneDto, db: Session) -> Optional[TuneDto]:
     """
     Update an existing tune with new details excluding audio and video fields.
 
@@ -193,81 +171,25 @@ async def update_tune(tune_id: int, tune: TuneDto, db: Session) -> Optional[Tune
     - INFO: Details of the updated tune.
     - ERROR: Failures during database operations.
     """
-    logger.debug(f"Updating tune with ID: {tune_id}.")
-    try:
-        # Fetch the existing tune
-        existing_tune = db.query(Tune).filter(tune.id == tune_id).first()
-        if not existing_tune:
-            logger.debug(f"tune not found: ID {tune_id}.")
-            return None
+    tune_obj = await get_tune_by_id(tune_id, db)
+    if not tune_obj:
+        return None
 
-        # Update fields excluding audio and image
-        existing_tune.upload_date = tune.upload_date
-        existing_tune.executed = tune.executed
-        existing_tune.video_title = tune.video_title
-        existing_tune.video_description = tune.video_description
-        existing_tune.privacy_status = tune.privacy_status
-        existing_tune.embeddable = tune.embeddable
-        existing_tune.license = tune.license
-        existing_tune.category = tune.category
-        existing_tune.tags = json.dumps(tune.tags)  # Serialize tags as JSON
+    tune_obj.upload_date = tune.upload_date
+    tune_obj.executed = tune.executed
+    tune_obj.video_title = tune.video_title
+    tune_obj.video_description = tune.video_description
+    tune_obj.privacy_status = tune.privacy_status
+    tune_obj.embeddable = tune.embeddable
+    tune_obj.license = tune.license
+    tune_obj.category = tune.category
+    tune_obj.tags = json.dumps(tune.tags)
 
-        # Commit changes to the database
-        db.commit()
-        db.refresh(existing_tune)
+    db.commit()
+    db.refresh(tune_obj)
 
-        logger.debug(f"tune ID {tune_id} updated successfully.")
-        logger.info(f"Updated tune: {existing_tune.video_title}.")
-        return TuneDto.model_validate(
-                {
-                    **tune.__dict__
-                }
-            )
+    return TuneDto.model_validate({
+        **tune_obj.__dict__,
+        "tags": json.loads(tune_obj.tags) if tune_obj.tags else [],
+    })
 
-    except Exception as e:
-        logger.error(f"Failed to update tune ID {tune_id}: {str(e)}")
-        db.rollback()  # Rollback in case of failure
-        raise Exception("Error occurred while updating the tune.")
-
-
-
-# Function to delete a tune and its files
-async def delete_tune(tune_id: int, db: Session) -> bool:
-    """
-    Delete a tune from the database and its associated files.
-
-    Args:
-    -----
-    tune_id : int
-        The ID of the tune to delete.
-    db : Session
-        The database session used for the operation.
-
-    Returns:
-    --------
-    bool
-        True if the tune and its files were deleted, otherwise False.
-
-    Logs:
-    -----
-    - DEBUG: Start and success of tune deletion.
-    - INFO: Details of the deleted tune and files.
-    - ERROR: Failures during tune deletion.
-    """
-    logger.debug(f"Deleting tune with ID: {tune_id}.")
-    try:
-        tune = db.query(Tune).filter(Tune.id == tune_id).first()
-        if not tune:
-            logger.debug(f"Tune not found for deletion: ID {tune_id}.")
-            return False
-
-        delete_directory(tune.base_dest_path)
-
-        db.delete(tune)
-        db.commit()
-        logger.debug(f"tune ID {tune_id} deleted successfully.")
-        return True
-    except Exception as e:
-        db.rollback()
-        logger.error(f"Failed to delete tune ID {tune_id}: {str(e)}")
-        raise Exception("Error occurred while deleting the tune.")

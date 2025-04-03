@@ -2,8 +2,8 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Navbar from '../core/Navbar';
 import PrivateRoute from '../../PrivateRoute';
-import InstantUpload from '../InstantUpload/InstantUpload';
-import ScheduledUpload from '../ScheduledUpload/ScheduledUpload';
+import InstantUpload from '../upload/InstantUpload';
+import ScheduledUpload from '../upload/ScheduledUpload';
 import UploadManagement from '../UploadManagement/UploadManagement';
 import './AuthenticatedRoutes.css'; // Add CSS file for styles
 

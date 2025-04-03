@@ -10,7 +10,7 @@ function UploadList({ uploadContainers, onUpdate, errorsList = [] }) {
           container={container}
           index={index}
           onUpdate={onUpdate}
-          errors={errorsList[index] || {}} // ✅ pass error object for each container
+          errors={errorsList[index] || {}}
         />
       ))}
     </>

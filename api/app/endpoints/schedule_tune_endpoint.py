@@ -25,8 +25,6 @@ Endpoints:
 - `PUT /tune-upload/{tune_id}`: Update a specific tune.
 - `DELETE /tune-upload/{tune_id}`: Delete a specific tune.
 """
-
-from datetime import datetime, timezone
 from math import ceil
 from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy.orm import Session
@@ -39,18 +37,18 @@ from app.utils.http_response_util import (
     response_201,
     response_204
 )
-from app.repositories.schedule_tune_repository import (
-    create_tunes_in_batch,
-    get_tunes,
-    update_tune,
-    delete_tune,
+from app.services.schedule_tune_service import (
+    get_user_tunes_service,
+    validate_and_create_batch_service,
+    validate_and_update_tune_service,
+    delete_user_tune_service,
 )
 from app.logger.logging_setup import logger
 
 schedule_tune_router = APIRouter(dependencies=[Depends(get_current_user)])
 
 @schedule_tune_router.get("")
-async def get_tunes_list(
+async def get_user_tunes(
     db: Session = Depends(get_db_session),
     current_user_id: str = Depends(get_current_user),
     page: int = Query(1, ge=1),  # Page number, default 1, must be >= 1
@@ -75,12 +73,10 @@ async def get_tunes_list(
     dict
         A dictionary containing the paginated list of tunes, current page, and total pages.
     """
-    logger.debug(f"Retrieving tunes for user_id: {current_user_id}, page: {page}, limit: {limit}")
     try:
-        tunes, total_count = await get_tunes(db, str(current_user_id), page, limit)
+        tunes, total_count = await get_user_tunes_service(str(current_user_id), page, limit, db)
         total_pages = ceil(total_count / limit)
 
-        logger.debug(f"Retrieved {len(tunes)} tunes for user_id: {current_user_id}")
         return response_200(
             "Success.",
             "Successfully fetched tunes.",
@@ -127,28 +123,17 @@ async def create_batch_tune_entry(
     HTTPException
         400: If any upload date is in the past.
     """
-    logger.debug(f"Creating batch tune entries: {len(tunes)} tunes.")
     try:
-        for tune in tunes:
-            current_time = datetime.now(timezone.utc)
-            if tune.upload_date < current_time:
-                logger.error(f"Upload date is in the past for {tune.video_title}.")
-                raise HTTPException(
-                    status_code=400, 
-                    detail=f"Upload date is in the past for {tune.video_title}"
-                )
-        results = await create_tunes_in_batch(tunes, str(current_user_id), db)
-        logger.debug("Batch tune creation successful.")
-        logger.info(f"Created tunes: {[tune.video_title for tune in tunes]}.")
-        
-        to_return = [tune.model_dump() for tune in results]
+        results = await validate_and_create_batch_service(tunes, str(current_user_id), db)
         return response_201(
             "Success",
             "Batch upload tunes created successfully.",
-            jsonable_encoder(to_return)
+            jsonable_encoder([t.model_dump() for t in results])
         )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"Failed to create batch tunes: {str(e)}")
+        logger.error(f"Batch tune creation failed: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
@@ -184,20 +169,15 @@ async def update_tune_entry(tune_id: int, tune: TuneDto, db: Session = Depends(g
         400: If the upload date is in the past.
         404: If the tune is not found.
     """
-    logger.debug(f"Updating tune with ID: {tune_id}.")
     try:
-        if tune.upload_date < datetime.now(timezone.utc):
-            logger.error("Upload date is in the past.")
-            raise HTTPException(status_code=400, detail="Upload date is in the past")
-        result = await update_tune(tune_id, tune, db)
-        if not result:
-            logger.error(f"tune not found: ID {tune_id}.")
-            raise HTTPException(status_code=404, detail="tune not found")
-        logger.debug(f"tune update successful: ID {tune_id}.")
-        logger.info(f"Updated tune: {result.video_title}.")
+        await validate_and_update_tune_service(tune_id, tune, db)
         return response_204()
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except LookupError as e:
+        raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
-        logger.error(f"Failed to update tune ID {tune_id}: {str(e)}")
+        logger.error(f"Update failed: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
@@ -228,14 +208,11 @@ async def delete_tune_entry(tune_id: int, db: Session = Depends(get_db_session))
     HTTPException
         404: If the tune is not found.
     """
-    logger.debug(f"Deleting tune with ID: {tune_id}.")
     try:
-        result = await delete_tune(tune_id, db)
-        if not result:
-            logger.error(f"tune not found for deletion: ID {tune_id}.")
-            raise HTTPException(status_code=404, detail="tune not found")
-        logger.debug(f"tune deletion successful: ID {tune_id}.")
+        await delete_user_tune_service(tune_id, db)
         return response_204()
+    except LookupError as e:
+        raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
-        logger.error(f"Failed to delete tune ID {tune_id}: {str(e)}")
+        logger.error(f"Delete failed: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")

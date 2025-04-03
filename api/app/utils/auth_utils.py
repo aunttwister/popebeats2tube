@@ -31,3 +31,9 @@ def generate_jwt_response(user_id: str, returned_user_id: str = None) -> dict:
         "expires_in": jwt["expires_in"],
         "user_id": returned_user_id or user_id
     }
+
+def is_token_expired(expiry: datetime) -> bool:
+    return datetime.now(timezone.utc) >= expiry
+
+def get_valid_refresh_token(token_response: dict, fallback_token: str) -> str:
+    return token_response.get("refresh_token", fallback_token)

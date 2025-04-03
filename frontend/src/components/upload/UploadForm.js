@@ -15,32 +15,32 @@ function UploadForm({ container, index, onUpdate, errors }) {
         imageFile={container.image}
         errors={errors}
       />
-      <MobileDateTimePicker
-        label="Upload Date and Time"
-        value={container.uploadDate}
-        onChange={(date) => onUpdate(index, { uploadDate: date })}
-        slotProps={{
-          textField: {
-            fullWidth: true,
-            margin: 'normal',
-            error: Boolean(errors?.uploadDate),
-            helperText: errors?.uploadDate,
-            sx: {
-              '& .MuiOutlinedInput-root': {
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: errors?.uploadDate ? 'red' : 'rgba(0, 0, 0, 0.23)', // <- Default MUI gray
+
+      {container.uploadDate !== undefined && (
+        <MobileDateTimePicker
+          label="Upload Date and Time"
+          value={container.uploadDate}
+          onChange={(date) => onUpdate(index, { uploadDate: date })}
+          slotProps={{
+            textField: {
+              fullWidth: true,
+              margin: 'normal',
+              error: Boolean(errors?.uploadDate),
+              helperText: errors?.uploadDate,
+              sx: {
+                '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
+                  borderColor: errors?.uploadDate ? 'red' : 'rgba(0, 0, 0, 0.23)',
                   borderWidth: '1px',
                   borderStyle: 'solid',
                 },
-              },
-              '& label.Mui-error': {
-                color: 'red',
+                '& label.Mui-error': {
+                  color: 'red',
+                },
               },
             },
-          },
-        }}
-      />
-
+          }}
+        />
+      )}
     </Box>
   );
 }

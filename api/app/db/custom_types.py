@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 
 class UtcDateTime(TypeDecorator):
     impl = DateTime
+    cache_ok = True
 
     def process_bind_param(self, value, dialect):
         """Called when a value is being saved to the database."""

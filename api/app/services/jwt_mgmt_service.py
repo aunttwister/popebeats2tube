@@ -23,8 +23,7 @@ Functions:
 - create_jwt(user_id: int): Generates a JWT token for the specified user ID.
 """
 
-from datetime import datetime, timedelta, timezone
-import os
+from datetime import datetime, timedelta
 from uuid import UUID
 import jwt
 from jose import jwt, JWTError, ExpiredSignatureError

@@ -23,12 +23,44 @@ Functions:
 
 import os
 import shutil
+import tempfile
+from typing import Tuple
 from fastapi import UploadFile
 from app.utils.file_util import generate_file_path_windows, generate_file_path_non_windows, validate_and_create_path
 import mimetypes
 from app.logger.logging_setup import logger
 from app.settings.env_settings import FILE_SHARE_OS
 
+def generate_file_path(user_id: str, video_title: str) -> str:
+    """
+    Generate a file path based on the operating system and user ID.
+
+    Args:
+    -----
+    user_id : str
+        The ID of the user (used to determine the storage directory).
+    video_title : str
+        The title of the video (used to create a unique directory for files).
+
+    Returns:
+    --------
+    str
+        The generated file path.
+
+    Logs:
+    -----
+    - DEBUG: Generated file path.
+    - ERROR: Logs failures during path generation.
+    """
+    logger.debug(f"Generating file path for user: {user_id}, video title: {video_title}.")
+    try:
+        if FILE_SHARE_OS.lower() == "windows":
+            return generate_file_path_windows(user_id, video_title)
+        else:
+            return generate_file_path_non_windows(user_id, video_title)
+    except Exception as e:
+        logger.error(f"Failed to generate file path: {str(e)}")
+        raise ValueError("Invalid file share configuration.")
 
 # Function to transfer multiple files
 def transfer_files(files: list[UploadFile], user_id: str, video_title: str) -> str:
@@ -63,13 +95,9 @@ def transfer_files(files: list[UploadFile], user_id: str, video_title: str) -> s
     logger.debug(f"Starting file transfer for {len(files)} files, user: {user_id}.")
     try:
         # Generate the destination path
-        if (FILE_SHARE_OS.lower == "windows"):
-            destination_path = generate_file_path_windows(user_id, video_title)
-        else:
-            destination_path = generate_file_path_non_windows(user_id, video_title)
-        logger.info(f"Generated destination path: {destination_path}.")
+        destination_path = generate_file_path(user_id, video_title)
 
-        destination_path = validate_and_create_path(destination_path)
+        validate_and_create_path(destination_path)
 
         for file in files:
             file_name = file.filename

@@ -11,10 +11,7 @@ Classes:
 
 from typing import Optional
 from datetime import datetime, timezone
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
-
-class UserCreateDTO(BaseModel):
-    email: EmailStr
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 class AuthRequestDto(BaseModel):
     """

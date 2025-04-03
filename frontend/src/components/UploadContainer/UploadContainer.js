@@ -17,7 +17,7 @@ import DropzoneField from './DropzoneField'; // Import the separated component
 import './UploadContainer.css'; // Import external CSS
 import config from '../../config.json';
 
-function UploadContainer({ onDropAudio, onDropImage, onChange, containerIndex, audioFile, imageFile }) {
+function UploadContainer({ onDropAudio, onDropImage, onChange, containerIndex, audioFile, imageFile, errors = {} }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [tags, setTags] = useState([]);
@@ -26,10 +26,6 @@ function UploadContainer({ onDropAudio, onDropImage, onChange, containerIndex, a
   const [embeddable, setEmbeddable] = useState(false);
   const [license, setLicense] = useState('youtube');
   const [categories, setCategories] = useState([]);
-
-  const [isTitleValid, setIsTitleValid] = useState(true); // Validation state
-  const [isAudioValid, setIsAudioValid] = useState(true);
-  const [isImageValid, setIsImageValid] = useState(true);
 
   const audioConfig = config.fileUpload.audio;
   const imageConfig = config.fileUpload.image;
@@ -74,7 +70,6 @@ function UploadContainer({ onDropAudio, onDropImage, onChange, containerIndex, a
   const handleTitleChange = (e) => {
     const newTitle = e.target.value;
     setTitle(newTitle);
-    setIsTitleValid(newTitle.trim() !== ''); // Validate title
   };
 
   const handleDescriptionChange = (e) => setDescription(e.target.value);
@@ -100,9 +95,15 @@ function UploadContainer({ onDropAudio, onDropImage, onChange, containerIndex, a
         file={audioFile}
         acceptedFileTypes={audioConfig.accept}
         maxFileSize={audioConfig.maxFileSize}
-        isValid={isAudioValid}
-        setIsValid={setIsAudioValid}
+        isValid={!errors.audio}
+        setIsValid={() => {}} // no-op unless you need internal control
       />
+      {errors.audio && (
+        <Typography variant="caption" color="error">
+          {errors.audio}
+        </Typography>
+      )}
+
 
       <DropzoneField
         onDrop={(files) => onDropImage(containerIndex, files)}
@@ -110,9 +111,14 @@ function UploadContainer({ onDropAudio, onDropImage, onChange, containerIndex, a
         file={imageFile}
         acceptedFileTypes={imageConfig.accept}
         maxFileSize={imageConfig.maxFileSize}
-        isValid={isImageValid}
-        setIsValid={setIsImageValid}
+        isValid={!errors.image}
+        setIsValid={() => {}}
       />
+      {errors.image && (
+        <Typography variant="caption" color="error">
+          {errors.image}
+        </Typography>
+      )}
 
       <TextField
         fullWidth
@@ -120,8 +126,8 @@ function UploadContainer({ onDropAudio, onDropImage, onChange, containerIndex, a
         label="YouTube Video Title"
         value={title}
         onChange={handleTitleChange}
-        error={!isTitleValid}
-        helperText={!isTitleValid ? 'Title is required' : ''}
+        error={Boolean(errors.title)}
+        helperText={errors.title}
       />
 
       <TextField
@@ -146,18 +152,23 @@ function UploadContainer({ onDropAudio, onDropImage, onChange, containerIndex, a
         ))}
       </Box>
 
-      <FormControl fullWidth margin="normal">
-          <FormLabel>Category</FormLabel>
-          <Select
-            value={category} // This will store category name instead of id
-            onChange={(e) => setCategory(e.target.value)} // Set the selected category name
-          >
-              {categories.map((cat) => (
-                <MenuItem key={cat.id} value={cat.id}> {/* Pass category.name as the value */}
-                  {cat.name} {/* Display category name */}
-                </MenuItem>
-            ))}
-            </Select>
+      <FormControl fullWidth margin="normal" error={Boolean(errors.category)}>
+        <FormLabel>Category</FormLabel>
+        <Select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+        >
+          {categories.map((cat) => (
+            <MenuItem key={cat.id} value={cat.id}>
+              {cat.name}
+            </MenuItem>
+          ))}
+        </Select>
+        {errors.category && (
+          <Typography variant="caption" color="error">
+            {errors.category}
+          </Typography>
+        )}
       </FormControl>
 
       <Box className="radio-group-container">

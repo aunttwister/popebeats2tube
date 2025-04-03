@@ -7,8 +7,8 @@ from app.services.google_oauth_service import handle_google_auth, handle_google_
 auth_router = APIRouter()
 
 @auth_router.post("/google")
-async def google_auth(auth_request: AuthRequestDto):
-    return await handle_google_auth(auth_request)
+async def google_auth(auth_request: AuthRequestDto, db: Session = Depends(get_db_session)):
+    return await handle_google_auth(auth_request, db)
 
 @auth_router.post("/google/callback")
 async def google_callback(request: Request, db: Session = Depends(get_db_session)):
