@@ -3,6 +3,7 @@ import os
 import re
 import subprocess
 from app.logger.logging_setup import logger
+from app.services.file_processing_service import get_mp4_path
 from app.settings.env_settings import FFMPEG_PATH, FFMPEG_PROBE_PATH
 
 
@@ -36,7 +37,7 @@ def extract_duration_from_probe_output(probe_output: str) -> float:
     return duration
 
 
-def build_ffmpeg_command(audio_path: str, image_path: str, output_path: str, duration_seconds: float) -> list:
+def build_ffmpeg_command(audio_path: str, image_path: str, mp4_path: str, duration_seconds: float) -> list:
     """
     Constructs the ffmpeg command for generating a video.
     """
@@ -53,7 +54,7 @@ def build_ffmpeg_command(audio_path: str, image_path: str, output_path: str, dur
         '-preset', 'ultrafast',
         '-qp', '0',
         '-f', 'mp4',
-        output_path
+        mp4_path
     ]
 
 
@@ -61,18 +62,20 @@ def generate_video(audio_path: str, image_path: str, output_path: str, video_tit
     """
     Generates a video using FFmpeg by combining an audio file and an image.
     """
+    
+    mp4_path = get_mp4_path(output_path, video_title)
     logger.debug(f"Generating video for title: {video_title}.")
 
     duration_seconds = probe_audio_duration(audio_path)
     logger.info(f"Audio duration: {duration_seconds} seconds")
 
-    ffmpeg_cmd = build_ffmpeg_command(audio_path, image_path, output_path, duration_seconds)
+    ffmpeg_cmd = build_ffmpeg_command(audio_path, image_path, mp4_path, duration_seconds)
     logger.debug(f"FFmpeg command: {' '.join(ffmpeg_cmd)}")
 
     try:
         subprocess.run(ffmpeg_cmd, check=True)
-        logger.info(f"Video successfully generated at: {output_path}")
-        return output_path
+        logger.info(f"Video successfully generated at: {mp4_path}")
+        return mp4_path
     except subprocess.CalledProcessError as e:
         logger.error(f"FFmpeg failed to generate video: {e.output.decode()}")
         raise RuntimeError("Video generation failed.") from e

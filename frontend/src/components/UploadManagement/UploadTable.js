@@ -1,10 +1,22 @@
 import React from 'react';
-import { Table, TableBody, TableCell, TableHead, TableRow, Button } from '@mui/material';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Button,
+  TableContainer,
+  Paper,
+} from '@mui/material';
 
 function UploadTable({ uploads, onEdit, onDelete }) {
   return (
-    <div className="upload-management-table-container">
-      <Table className="upload-management-table">
+    <TableContainer
+      component={Paper}
+      className="upload-management-table-container"
+    >
+      <Table className="upload-management-table" size="medium">
         <TableHead>
           <TableRow>
             <TableCell>Title</TableCell>
@@ -16,24 +28,26 @@ function UploadTable({ uploads, onEdit, onDelete }) {
           </TableRow>
         </TableHead>
         <TableBody>
-          {uploads.map((upload) => (
-            <TableRow key={upload.id}>
-              <TableCell data-label="Title">{upload.video_title}</TableCell>
-              <TableCell data-label="Upload Date">
-                {new Date(upload.upload_date).toLocaleString()}
-              </TableCell>
-              <TableCell data-label="Status">
-                {upload.executed ? 'Archived' : 'Scheduled'}
-              </TableCell>
-              <TableCell data-label="Image Name">{upload.img_name || 'N/A'}</TableCell>
-              <TableCell data-label="Audio Name">{upload.audio_name || 'N/A'}</TableCell>
-              <TableCell data-label="Actions">
-                <div className="upload-management-buttons">
-                  {!upload.executed && (
-                    <>
+          {uploads.length > 0 ? (
+            uploads.map((upload) => (
+              <TableRow key={upload.id}>
+                <TableCell data-label="Title">{upload.video_title}</TableCell>
+                <TableCell data-label="Upload Date">
+                  {new Date(upload.upload_date).toLocaleString()}
+                </TableCell>
+                <TableCell data-label="Status">
+                  {upload.executed ? 'Archived' : 'Scheduled'}
+                </TableCell>
+                <TableCell data-label="Image Name">{upload.img_name || 'N/A'}</TableCell>
+                <TableCell data-label="Audio Name">{upload.audio_name || 'N/A'}</TableCell>
+                <TableCell data-label="Actions">
+                  {upload.executed ? (
+                    '—'
+                  ) : (
+                    <div className="upload-management-buttons">
                       <Button
                         variant="outlined"
-                        sx={{ marginRight: 1 }}
+                        size="small"
                         className="upload-management-button"
                         onClick={() => onEdit(upload)}
                       >
@@ -42,20 +56,27 @@ function UploadTable({ uploads, onEdit, onDelete }) {
                       <Button
                         variant="outlined"
                         color="error"
+                        size="small"
                         className="upload-management-button"
                         onClick={() => onDelete(upload)}
                       >
                         Delete
                       </Button>
-                    </>
+                    </div>
                   )}
-                </div>
+                </TableCell>
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={6} align="center">
+                No uploads found.
               </TableCell>
             </TableRow>
-          ))}
+          )}
         </TableBody>
       </Table>
-    </div>
+    </TableContainer>
   );
 }
 

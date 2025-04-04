@@ -1,17 +1,15 @@
 import asyncio
-from app.db.db import User
-from app.dto import TuneDto
+import os
+from app.db.db import Tune, User
 from app.logger.logging_setup import logger
-from app.services.file_transfer_service import transfer_files
+from app.services.file_processing_service import get_audio_path, get_image_path
 from app.services.generate_mp4_service import generate_video
 from app.services.tune2tube_service import upload_video
-from app.utils.file_util import base64_to_file
 from typing import List
+from app.settings.env_settings import YOUTUBE_ACCESS_CONCURRENCY_LIMIT
 
-CONCURRENCY_LIMIT = 3  # You can tune this
-
-async def process_and_upload_tunes(tunes: List[TuneDto], user: User):
-    sem = asyncio.Semaphore(CONCURRENCY_LIMIT)
+async def process_and_upload_tunes(tunes: List[Tune], user: User):
+    sem = asyncio.Semaphore(YOUTUBE_ACCESS_CONCURRENCY_LIMIT)
 
     async def sem_task(tune):
         async with sem:
@@ -19,14 +17,14 @@ async def process_and_upload_tunes(tunes: List[TuneDto], user: User):
 
     await asyncio.gather(*(sem_task(tune) for tune in tunes))
 
-async def _process_and_upload_tune(tune: TuneDto, user: User):
+async def _process_and_upload_tune(tune: Tune, user: User):
     logger.debug(f"Processing tune '{tune.video_title}' for user '{user.id}'")
-
     try:
-        audio_path, img_path, output_path = await asyncio.to_thread(_prepare_files, tune, user.id)
+        audio_path = get_audio_path(tune)
+        img_path = get_image_path(tune)
 
         logger.debug("Generating video...")
-        mp4_path = await asyncio.to_thread(generate_video, audio_path, img_path, output_path, tune.video_title)
+        mp4_path = await asyncio.to_thread(generate_video, audio_path, img_path, tune.base_dest_path, tune.video_title)
         logger.info(f"Generated video: {mp4_path}")
 
         logger.debug("Uploading to YouTube...")
@@ -47,15 +45,6 @@ async def _process_and_upload_tune(tune: TuneDto, user: User):
         logger.info(f"Upload complete: '{tune.video_title}'")
     except Exception as e:
         logger.error(f"Error processing tune '{tune.video_title}': {e}")
+        if(os.path.exists(mp4_path)):
+            os.remove(mp4_path)
         raise
-
-def _prepare_files(tune: TuneDto, user_id: str):
-    audio_file = base64_to_file(tune.audio_file_base64, tune.audio_name)
-    img_file = base64_to_file(tune.img_file_base64, tune.img_name)
-    dest_path = transfer_files([audio_file, img_file], user_id, tune.video_title).replace("\\", "/")
-
-    return (
-        f"{dest_path}/{tune.audio_name}",
-        f"{dest_path}/{tune.img_name}",
-        f"{dest_path}/{tune.video_title}.mp4"
-    )

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Box, Button } from '@mui/material';
+import { Box, Button, Fade } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import UploadList from '../ScheduledUpload/UploadList';
+import UploadList from './UploadList';
 import { createBatchSchedule } from '../../services/scheduleTuneService.ts';
 import { fileConverter } from '../../utils/fileConverter';
 import { toastHelper } from '../../utils/toastHelper';
@@ -81,11 +81,15 @@ function ScheduledUpload() {
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Box sx={{ padding: 3 }}>
-        <UploadList
-          uploadContainers={uploadContainers}
-          onUpdate={handleUpdateContainer}
-          errorsList={errorsList}
-        />
+         <Fade in timeout={500}>
+          <Box>
+            <UploadList
+              uploadContainers={uploadContainers}
+              onUpdate={handleUpdateContainer}
+              errorsList={errorsList}
+            />
+          </Box>
+         </Fade>
         <Button
           variant="contained"
           onClick={handleAddContainer}

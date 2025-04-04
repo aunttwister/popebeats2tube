@@ -27,6 +27,7 @@ from requests import Session
 from app.auth_dependencies import get_current_user
 from app.db.db import get_db_session
 from app.dto import TuneDto
+from app.services.instant_tune_service import validate_and_create_instant_batch_service
 from app.services.user_mgmt_service import verify_user_id_service
 from app.services.google_oauth_service import validate_and_refresh_token
 from app.services.upload_service import process_and_upload_tunes
@@ -53,8 +54,10 @@ async def upload_batch(
     await validate_and_refresh_token(user, db)
 
     try:
-        await process_and_upload_tunes(tunes, user)
-        return {"message": "Batch upload successful"}
+        validated_tunes = await validate_and_create_instant_batch_service(tunes, user.id, db)
+        await process_and_upload_tunes(validated_tunes, user)
+
+        return {"message": "Batch upload successful."}
     except Exception as e:
         logger.error(f"Batch upload failed: {e}")
         raise HTTPException(status_code=500, detail="Upload failed")

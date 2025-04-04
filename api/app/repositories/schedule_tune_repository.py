@@ -35,66 +35,62 @@ from app.db.db import Tune
 from app.dto import TuneDto
 
 
-async def get_tunes(db: Session, user_id: str, page: int, limit: int) -> Tuple[List[TuneDto], int]:
+async def get_tunes(
+    db: Session,
+    user_id: Optional[str] = None,
+    page: int = 1,
+    limit: int = 10,
+    upload_date_before: Optional[datetime] = None,
+    executed: Optional[bool] = None
+) -> Tuple[List[Tune], int]:
     """
-    Retrieve paginated tunes for a specific user from the database,
-    prioritizing unexecuted tunes ordered by soonest upload_date,
-    then executed tunes.
+    Retrieve paginated tunes with optional filters.
 
-    Args:
-    -----
-    db : Session
-        The database session used for querying.
-    user_id : str
-        The ID of the user whose tunes are to be fetched.
-    page : int
-        The page number for pagination.
-    limit : int
-        The number of items per page for pagination.
+    Filters:
+    --------
+    - user_id: tunes for a specific user.
+    - upload_date_before: only tunes scheduled to upload before or at a given datetime.
+    - executed: whether the tune has already been processed or not.
 
     Returns:
     --------
-    Tuple[List[TuneDto], int]
-        A tuple containing the paginated list of tunes and the total count of tunes.
+    Tuple[List[TuneDto], int]: List of tunes and total count.
     """
     try:
-        # Fetch total count of tunes for pagination
-        total_count = db.query(Tune).filter(Tune.user_id == user_id).count()
+        query = db.query(Tune)
 
-        # Conditional ordering
+        if user_id:
+            query = query.filter(Tune.user_id == user_id)
+
+        if upload_date_before:
+            query = query.filter(Tune.upload_date <= upload_date_before)
+
+        if executed is not None:
+            query = query.filter(Tune.executed == executed)
+
+        total_count = query.count()
+
         tunes = (
-            db.query(Tune)
-            .filter(Tune.user_id == user_id)
+            query
             .order_by(
-                case(
-                    (Tune.executed == False, 0), 
-                    (Tune.executed == True, 1)
-                ),  # Prioritize unexecuted tunes
-                Tune.upload_date.asc(),  # Order by soonest upload_date within each group
+                case((Tune.executed == False, 0), (Tune.executed == True, 1)),
+                Tune.upload_date.asc()
             )
             .offset((page - 1) * limit)
             .limit(limit)
             .all()
         )
 
-        return [
-            TuneDto.model_validate(
-                {
-                    **tune.__dict__,
-                    "tags": json.loads(tune.tags) if tune.tags else [],
-                }
-            )
-            for tune in tunes
-        ], total_count
+        return tunes, total_count
     except Exception as e:
-        raise Exception("Error occurred while fetching tunes.")
+        raise Exception("Error occurred while fetching tunes.") from e
     
     
 async def get_tune_by_id(tune_id: int, db: Session) -> Optional[Tune]:
     return db.query(Tune).filter(Tune.id == tune_id).first()
 
 
-async def insert_tunes_batch(tunes: List[Tune], db: Session) -> List[TuneDto]:
+async def insert_scheduled_tunes_batch(tunes: List[Tune], db: Session) -> List[TuneDto]:
     """
     Create multiple tunes in a single database transaction.
 

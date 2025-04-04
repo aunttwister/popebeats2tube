@@ -1,8 +1,7 @@
 from datetime import datetime, timezone
 import json
 import os
-from typing import List, Tuple
-from fastapi import UploadFile
+from typing import List, Optional, Tuple
 from sqlalchemy.orm import Session
 from app.db.db import Tune
 from app.dto import TuneDto
@@ -10,66 +9,78 @@ from app.repositories.schedule_tune_repository import (
     delete_tune_by_id,
     get_tune_by_id,
     get_tunes,
-    insert_tunes_batch,
+    insert_scheduled_tunes_batch,
     update_tune_fields
 )
 from app.logger.logging_setup import logger
-from app.services.file_transfer_service import generate_file_path
-from app.utils.file_util import base64_to_file, delete_directory
-from app.services.temp_file_mgmt_service import save_temp_file, move_temp_file, cleanup_temp_files
+from app.services.file_processing_service import cleanup_temp_files, persistence_preparation_processing, processing_commit
+from app.utils.file_util import delete_directory
 
 
-async def get_user_tunes_service(user_id: str, page: int, limit: int, db: Session) -> Tuple[list, int]:
-    logger.debug(f"Fetching tunes from DB for user: {user_id}, page: {page}, limit: {limit}")
-    tunes_list, tunes_total_count = await get_tunes(db, user_id, page, limit)
-    logger.debug(f"Retrieved {len(tunes_list)} out of total {tunes_total_count} tunes for user_id: {user_id}")
+async def get_user_tunes_service(
+    user_id: str,
+    page: int,
+    limit: int,
+    db: Session,
+    upload_date_before: Optional[datetime] = None,
+    executed: Optional[bool] = None
+) -> Tuple[List[TuneDto], int]:
+    """
+    Service layer — returns serialized DTOs for use in FastAPI routes.
+    """
+    logger.debug(f"Fetching tunes for user: {user_id}, page: {page}, limit: {limit}, executed: {executed}, before: {upload_date_before}")
+    
+    tunes, total_count = await get_tunes(db, user_id, page, limit, upload_date_before, executed)
 
-    return tunes_list, tunes_total_count 
+    tune_dtos = [
+        TuneDto.model_validate({
+            **tune.__dict__,
+            "tags": json.loads(tune.tags) if tune.tags else [],
+        }) for tune in tunes
+    ]
+
+    logger.debug(f"Retrieved {len(tune_dtos)} tunes for user_id: {user_id}")
+    return tune_dtos, total_count
 
 
-async def validate_and_create_batch_service(tunes: List[TuneDto], user_id: str, db: Session):
+async def validate_and_create_scheduled_batch_service(tunes: List[TuneDto], user_id: str, db: Session) -> List[Tune]:
     current_time = datetime.now(timezone.utc)
     db_tunes = []
     temp_paths = []
-    file_mappings: List[Tuple[str, str]] = []  # (temp_path, final_path)
+    file_mappings: List[Tuple[str, str]] = []
+
+    logger.debug(f"Starting batch validation and preparation for {len(tunes)} tunes (user_id={user_id})")
 
     try:
         for tune in tunes:
+            logger.debug(f"Validating tune: '{tune.video_title}'")
+
             if not tune.upload_date:
-                raise ValueError(f"Upload date is missing for {tune.video_title}")
+                raise ValueError(f"Upload date is missing for '{tune.video_title}'")
             if tune.upload_date < current_time:
-                raise ValueError(f"Upload date is in the past for {tune.video_title}")
+                raise ValueError(f"Upload date is in the past for '{tune.video_title}'")
 
-            # Decode base64 into UploadFile-like objects
-            img_file: UploadFile = base64_to_file(tune.img_file_base64, f"{tune.video_title}.{tune.img_type}")
-            audio_file: UploadFile = base64_to_file(tune.audio_file_base64, f"{tune.video_title}.{tune.audio_type}")
+            logger.debug(f"Preparing persistence paths for tune: '{tune.video_title}'")
+            audio_map, img_map, base_dest_path = persistence_preparation_processing(tune, user_id)
 
-            # Save to temp
-            img_temp_path = save_temp_file(img_file)
-            audio_temp_path = save_temp_file(audio_file)
-            temp_paths.extend([img_temp_path, audio_temp_path])
+            temp_paths.extend([audio_map[0], img_map[0]])
+            file_mappings.extend([audio_map, img_map])
 
-            # Generate final path
-            final_dir = generate_file_path(user_id, tune.video_title)
+            logger.debug(f"Mapped tune '{tune.video_title}' to DB model with base path: {base_dest_path}")
+            db_tunes.append(map_tune_dto_to_model(tune, user_id, base_dest_path=base_dest_path))
 
-            img_final_path = os.path.join(final_dir, img_file.filename)
-            audio_final_path = os.path.join(final_dir, audio_file.filename)
-            file_mappings.append((img_temp_path, img_final_path))
-            file_mappings.append((audio_temp_path, audio_final_path))
+        logger.debug(f"Inserting {len(db_tunes)} tunes into the database...")
+        created_tunes = await insert_scheduled_tunes_batch(db_tunes, db)
 
-            db_tunes.append(map_tune_dto_to_model(tune, user_id, base_dest_path=final_dir))
+        logger.debug("Database insert successful. Committing file move operations...")
+        processing_commit(file_mappings)
 
-        created_tunes = await insert_tunes_batch(db_tunes, db)
-
-        # Move files only after successful DB insert
-        for temp_path, final_path in file_mappings:
-            move_temp_file(temp_path, final_path)
-
+        logger.info(f"Batch upload successfully validated, saved, and processed for user_id={user_id}")
         return created_tunes
 
     except Exception as e:
-        cleanup_temp_files(temp_paths)
         logger.error(f"Batch creation failed: {str(e)}")
+        cleanup_temp_files(temp_paths)
         raise
 
 def map_tune_dto_to_model(tune: TuneDto, user_id: str, base_dest_path: str) -> Tune:

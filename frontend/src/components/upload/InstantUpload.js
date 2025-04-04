@@ -98,6 +98,7 @@ function InstantUpload() {
           audio_type: c.audio?.name.split('.').pop(),
           audio_file_base64: await fileConverter.fileToBase64(c.audio),
           executed: true,
+          upload_date: Date.now()
         }))
       );
 

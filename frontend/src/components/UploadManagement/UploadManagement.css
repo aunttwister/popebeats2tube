@@ -48,6 +48,25 @@
     width: 100%; /* Ensure buttons span the full card width */
     margin: 0 auto; /* Center buttons */
   }
+
+  .upload-management-table tbody tr {
+    padding: 8px; /* Reduce from 16px */
+    margin-bottom: 0.5rem; /* Less space between rows */
+  }
+
+  .upload-management-table tbody tr td {
+    padding: 4px 0; /* Reduce padding */
+    font-size: 0.875rem; /* Slightly smaller text */
+  }
+
+  .upload-management-table tbody tr td::before {
+    font-size: 0.75rem;
+    margin-right: 0.5rem;
+  }
+
+  .upload-management-table-container {
+    min-height: 280px; /* Optional: to match desktop height */
+  }
 }
 
 .upload-management-pagination {
@@ -56,4 +75,22 @@
   align-items: center; /* Align pagination vertically */
   padding: 16px 0; /* Add some vertical spacing */
   width: 100%; /* Ensure it spans the full width of the table */
+}
+
+.upload-management-table-container {
+  width: 100%;
+  overflow-x: auto;
+  min-height: 280px; /* Ensures consistent height even if table is empty */
+}
+
+.upload-management-table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.upload-management-table th,
+.upload-management-table td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

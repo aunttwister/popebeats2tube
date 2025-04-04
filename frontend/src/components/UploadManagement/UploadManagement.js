@@ -1,13 +1,27 @@
 import React, { useEffect, useState } from 'react';
-import { CircularProgress, Typography } from '@mui/material';
+import {
+  CircularProgress,
+  Typography,
+  FormControl,
+  FormLabel,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  Box,
+  Fade,
+} from '@mui/material';
+import { MobileDateTimePicker } from '@mui/x-date-pickers/MobileDateTimePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
+
 import UploadTable from './UploadTable';
 import PaginationControl from './PaginationControl';
 import DeleteModal from './DeleteModal';
 import EditModal from './EditModal';
 import { getSchedules, editSchedule, removeSchedule } from '../../services/scheduleTuneService.ts';
-import dayjs from 'dayjs';
-import './UploadManagement.css';
 import { toastHelper } from '../../utils/toastHelper';
+import './UploadManagement.css';
 
 function UploadManagement() {
   const [uploads, setUploads] = useState([]);
@@ -20,16 +34,25 @@ function UploadManagement() {
   const [selectedUpload, setSelectedUpload] = useState(null);
   const [editFormData, setEditFormData] = useState({ video_title: '', upload_date: '' });
 
+  const [beforeDate, setBeforeDate] = useState('');
+  const [executedFilter, setExecutedFilter] = useState('all');
+
   const fetchSchedules = async (page) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await getSchedules(page, 10);
+
+      const filters = {
+        upload_date_before: beforeDate ? dayjs(beforeDate).endOf('day').toISOString() : undefined,
+        executed: executedFilter !== 'all' ? executedFilter : undefined,
+      };
+
+      const response = await getSchedules(page, 10, filters);
       setUploads(response.data.data || []);
       setTotalPages(response.data.total_pages || 1);
-      toastHelper.newMessage('success', response.title, response.message)
     } catch (err) {
-      toastHelper.newMessage('error', err.title, err.message)
+      setError('Failed to load uploads.');
+      toastHelper.newMessage('error', err.title || 'Error', err.message || 'Unknown error');
     } finally {
       setLoading(false);
     }
@@ -37,9 +60,10 @@ function UploadManagement() {
 
   useEffect(() => {
     fetchSchedules(currentPage);
-  }, [currentPage]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, beforeDate, executedFilter]);
 
-  const handlePageChange = (event, value) => setCurrentPage(value);
+  const handlePageChange = (_, value) => setCurrentPage(value);
 
   const handleDeleteClick = (upload) => {
     setSelectedUpload(upload);
@@ -50,10 +74,10 @@ function UploadManagement() {
     try {
       if (selectedUpload) {
         await removeSchedule(selectedUpload.id);
-        setUploads(uploads.filter((u) => u.id !== selectedUpload.id));
+        setUploads((prev) => prev.filter((u) => u.id !== selectedUpload.id));
       }
     } catch (err) {
-      toastHelper.newMessage('error', err.title, err.detail)
+      toastHelper.newMessage('error', err.title || 'Error', err.detail || 'Delete failed');
     } finally {
       setDeleteModalOpen(false);
     }
@@ -63,13 +87,13 @@ function UploadManagement() {
     setSelectedUpload(upload);
     setEditFormData({
       video_title: upload.video_title || '',
-      video_description: upload.video_description || '', // Ensure description is passed
-      upload_date: dayjs(upload.upload_date), // Convert to dayjs object
-      tags: Array.isArray(upload.tags) ? upload.tags : JSON.parse(upload.tags || '[]'), // Ensure tags is an array
-      category: upload.category || '', // Pass category
-      privacy_status: upload.privacy_status || 'private', // Default to 'private'
-      license: upload.license || 'youtube', // Default to 'youtube'
-      embeddable: upload.embeddable || false, // Default to false
+      video_description: upload.video_description || '',
+      upload_date: dayjs(upload.upload_date),
+      tags: Array.isArray(upload.tags) ? upload.tags : JSON.parse(upload.tags || '[]'),
+      category: upload.category || '',
+      privacy_status: upload.privacy_status || 'private',
+      license: upload.license || 'youtube',
+      embeddable: upload.embeddable || false,
     });
     setEditModalOpen(true);
   };
@@ -79,51 +103,88 @@ function UploadManagement() {
       if (selectedUpload) {
         const updatedSchedule = { ...selectedUpload, ...editFormData };
         await editSchedule(selectedUpload.id, updatedSchedule);
-        setUploads(
-          uploads.map((u) => (u.id === selectedUpload.id ? { ...u, ...updatedSchedule } : u))
+        setUploads((prev) =>
+          prev.map((u) => (u.id === selectedUpload.id ? { ...u, ...updatedSchedule } : u))
         );
       }
     } catch (err) {
-      toastHelper.newMessage('error', err.title, err.message)
+      toastHelper.newMessage('error', err.title || 'Error', err.message || 'Edit failed');
     } finally {
       setEditModalOpen(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="upload-management-loading">
-        <CircularProgress />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="upload-management-container">
-        <Typography color="error">{error}</Typography>
-      </div>
-    );
-  }
-
   return (
-    <div className="upload-management-container">
-      <UploadTable uploads={uploads} onEdit={handleEditClick} onDelete={handleDeleteClick} />
-      <PaginationControl totalPages={totalPages} currentPage={currentPage} onPageChange={handlePageChange} />
-      <DeleteModal
-        open={deleteModalOpen}
-        onClose={() => setDeleteModalOpen(false)}
-        onConfirm={handleDeleteConfirm}
-        selectedUpload={selectedUpload}
-      />
-      <EditModal
-        open={editModalOpen}
-        onClose={() => setEditModalOpen(false)}
-        onSave={handleEditSave}
-        editFormData={editFormData}
-        setEditFormData={setEditFormData}
-      />
-    </div>
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <div className="upload-management-container">
+        <Box className="upload-management-filters" sx={{ mb: 2 }}>
+          <MobileDateTimePicker
+            label="Before Date"
+            value={beforeDate ? dayjs(beforeDate) : null}
+            onAccept={(newValue) => {
+              if (newValue?.isValid()) {
+                setBeforeDate(newValue.toISOString());
+                setCurrentPage(1);
+              }
+            }}
+            minutesStep={60}
+            slotProps={{
+              textField: {
+                margin: 'normal',
+                sx: { width: 250, mr: 2 },
+              },
+            }}
+          />
+
+          <FormControl>
+            <FormLabel>Status</FormLabel>
+            <RadioGroup
+              row
+              value={executedFilter}
+              onChange={(e) => setExecutedFilter(e.target.value)}
+            >
+              <FormControlLabel value="all" control={<Radio />} label="All" />
+              <FormControlLabel value="false" control={<Radio />} label="Scheduled" />
+              <FormControlLabel value="true" control={<Radio />} label="Archived" />
+            </RadioGroup>
+          </FormControl>
+        </Box>
+
+        {loading ? (
+          <div className="upload-management-loading">
+            <CircularProgress />
+          </div>
+        ) : error ? (
+          <Typography color="error">{error}</Typography>
+        ) : (
+          <Fade in timeout={500}>
+            <div>
+              <UploadTable uploads={uploads} onEdit={handleEditClick} onDelete={handleDeleteClick} />
+              <PaginationControl
+                totalPages={totalPages}
+                currentPage={currentPage}
+                onPageChange={handlePageChange}
+              />
+            </div>
+          </Fade>
+        )}
+
+        <DeleteModal
+          open={deleteModalOpen}
+          onClose={() => setDeleteModalOpen(false)}
+          onConfirm={handleDeleteConfirm}
+          selectedUpload={selectedUpload}
+        />
+
+        <EditModal
+          open={editModalOpen}
+          onClose={() => setEditModalOpen(false)}
+          onSave={handleEditSave}
+          editFormData={editFormData}
+          setEditFormData={setEditFormData}
+        />
+      </div>
+    </LocalizationProvider>
   );
 }
 

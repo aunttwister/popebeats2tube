@@ -48,3 +48,5 @@ urllib3==2.3.0
 uvicorn==0.34.0
 win32_setctime==1.2.0
 python-jose
+APScheduler>=3.10.4
+aiofiles>=24.1.0

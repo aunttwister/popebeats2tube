@@ -20,16 +20,88 @@ Functions:
 - transfer_file: Transfers a file to the configured shared location.
 - get_file_type: Determines the type of the file based on its MIME type.
 """
-
+import mimetypes
 import os
 import shutil
 import tempfile
-from typing import Tuple
 from fastapi import UploadFile
-from app.utils.file_util import generate_file_path_windows, generate_file_path_non_windows, validate_and_create_path
-import mimetypes
+from typing import List, Tuple
+from app.db.db import Tune
+from app.dto import TuneDto
 from app.logger.logging_setup import logger
 from app.settings.env_settings import FILE_SHARE_OS
+from app.utils.file_util import base64_to_file, generate_file_path_non_windows, generate_file_path_windows, validate_and_create_path
+
+def get_mp4_path(output_path: str, video_title: str) -> str:
+    return os.path.join(output_path, f"{video_title}.mp4")
+
+def get_audio_path(tune: Tune) -> str:
+    return f"{tune.base_dest_path}/{tune.audio_name}"
+
+def get_image_path(tune: Tune) -> str:
+    return f"{tune.base_dest_path}/{tune.img_name}"
+
+def persistence_preparation_processing(
+    tune: TuneDto, user_id: str
+) -> Tuple[str, str, Tuple[str, str], Tuple[str, str], str]:
+    """
+    Prepares files for DB persistence and later file move after DB success.
+
+    Returns:
+    - audio_final_path
+    - img_final_path
+    - audio_map: (temp_path, final_path)
+    - img_map: (temp_path, final_path)
+    - base_dest_path
+    """
+    img_file: UploadFile = base64_to_file(tune.img_file_base64, f"{tune.img_name}")
+    audio_file: UploadFile = base64_to_file(tune.audio_file_base64, f"{tune.audio_name}")
+
+    img_temp_path = save_temp_file(img_file)
+    audio_temp_path = save_temp_file(audio_file)
+
+    base_dest_path = generate_file_path(user_id, tune.video_title)
+
+    img_final_path = os.path.join(base_dest_path, img_file.filename)
+    audio_final_path = os.path.join(base_dest_path, audio_file.filename)
+
+    return (
+        (audio_temp_path, audio_final_path),
+        (img_temp_path, img_final_path),
+        base_dest_path
+    )
+
+
+def processing_commit(file_mappings: List[Tuple[str, str]]):
+    for temp_path, final_path in file_mappings:
+        move_temp_file(temp_path, final_path)
+
+def save_temp_file(file: UploadFile) -> str:
+    suffix = f".{file.filename.split('.')[-1]}"
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+        file.file.seek(0)
+        shutil.copyfileobj(file.file, tmp)
+        logger.debug(f"Saved temp file for '{file.filename}' at '{tmp.name}'")
+        return tmp.name
+
+
+def move_temp_file(temp_path: str, final_path: str):
+    os.makedirs(os.path.dirname(final_path), exist_ok=True)
+    shutil.move(temp_path, final_path)
+    logger.info(f"Moved temp file from '{temp_path}' to final destination '{final_path}'")
+
+
+def cleanup_temp_files(temp_paths: List[str]):
+    for path in temp_paths:
+        try:
+            if os.path.exists(path):
+                os.remove(path)
+                logger.debug(f"Cleaned up temp file: {path}")
+            else:
+                logger.warning(f"Temp file not found during cleanup: {path}")
+        except Exception as e:
+            logger.error(f"Failed to clean up temp file '{path}': {str(e)}")
+
 
 def generate_file_path(user_id: str, video_title: str) -> str:
     """

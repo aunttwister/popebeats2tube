@@ -25,7 +25,9 @@ Endpoints:
 - `PUT /tune-upload/{tune_id}`: Update a specific tune.
 - `DELETE /tune-upload/{tune_id}`: Delete a specific tune.
 """
+from datetime import datetime
 from math import ceil
+from typing import Optional
 from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy.orm import Session
 from fastapi.encoders import jsonable_encoder
@@ -39,7 +41,7 @@ from app.utils.http_response_util import (
 )
 from app.services.schedule_tune_service import (
     get_user_tunes_service,
-    validate_and_create_batch_service,
+    validate_and_create_scheduled_batch_service,
     validate_and_update_tune_service,
     delete_user_tune_service,
 )
@@ -51,8 +53,10 @@ schedule_tune_router = APIRouter(dependencies=[Depends(get_current_user)])
 async def get_user_tunes(
     db: Session = Depends(get_db_session),
     current_user_id: str = Depends(get_current_user),
-    page: int = Query(1, ge=1),  # Page number, default 1, must be >= 1
-    limit: int = Query(10, ge=1, le=100),  # Limit, default 10, must be between 1 and 100
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, ge=1, le=100),
+    executed: Optional[bool] = Query(None),
+    upload_date_before: Optional[datetime] = Query(None)
 ):
     """
     Retrieve a paginated list of tunes for the current user.
@@ -74,7 +78,14 @@ async def get_user_tunes(
         A dictionary containing the paginated list of tunes, current page, and total pages.
     """
     try:
-        tunes, total_count = await get_user_tunes_service(str(current_user_id), page, limit, db)
+        tunes, total_count = await get_user_tunes_service(
+            str(current_user_id),
+            page,
+            limit,
+            db,
+            upload_date_before=upload_date_before,
+            executed=executed
+        )
         total_pages = ceil(total_count / limit)
 
         return response_200(
@@ -124,7 +135,7 @@ async def create_batch_tune_entry(
         400: If any upload date is in the past.
     """
     try:
-        results = await validate_and_create_batch_service(tunes, str(current_user_id), db)
+        results = await validate_and_create_scheduled_batch_service(tunes, str(current_user_id), db)
         return response_201(
             "Success",
             "Batch upload tunes created successfully.",

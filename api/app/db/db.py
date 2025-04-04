@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 import os
 from typing import Generator
 import uuid
@@ -126,3 +127,15 @@ def get_db_session() -> Generator[Session, None, None]:
     finally:
         db.close()
         logger.debug("Database session closed.")
+
+
+@contextmanager
+def get_db_session_context() -> Generator[Session, None, None]:
+    db = SessionLocal()
+    try:
+        yield db
+    except Exception:
+        db.rollback()
+        raise
+    finally:
+        db.close()
