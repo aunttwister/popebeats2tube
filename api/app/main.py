@@ -14,7 +14,7 @@ from app.endpoints.health_endpoint import health_router
 from app.auth_dependencies import custom_openapi
 from app.jobs.tune_upload_job import start_scheduler
 from app.logger.logging_setup import logger
-from app.settings.env_settings import KILL_SWITCH_ENABLED, MAINTENANCE_MODE_ENABLED
+from app.settings.env_settings import KILL_SWITCH_ENABLED, MAINTENANCE_MODE_ENABLED, CORS_ORIGINS
 from app.utils.http_response_util import (
     not_found_handler,
     forbidden_handler,
@@ -45,7 +45,12 @@ async def lifespan(app: FastAPI):
     logger.debug("Application is stopping.")
 
 # Create FastAPI app instance
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    docs_url="/api/docs",       # Swagger UI
+    redoc_url="/api/redoc",     # Optional: ReDoc UI
+    openapi_url="/api/openapi.json",  # OpenAPI schema
+    lifespan=lifespan
+)
 
 # Store the original app.openapi method before overriding
 app._original_openapi = app.openapi
@@ -53,11 +58,12 @@ app._original_openapi = app.openapi
 # Override the app.openapi with the custom_openapi function
 app.openapi = lambda: custom_openapi(app)
 
-origins = [
-    "http://localhost:3000",  # Your React frontend
-    "http://127.0.0.1:3000",  # Alternative localhost format
-    # Add more origins as needed
-]
+origins = [origin.strip() for origin in CORS_ORIGINS.split(",") if origin.strip()]
+
+if origins:
+    logger.debug(f"Loading CORS origins: {origins}")
+else:
+    logger.warning("No valid CORS origins were loaded from CORS_ORIGINS!")
 
 # Add CORS middleware
 app.add_middleware(
@@ -81,8 +87,14 @@ async def maintenance_mode_middleware(request: Request, call_next):
 @app.middleware("http")
 async def add_security_headers(request, call_next):
     response = await call_next(request)
-    response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
-    response.headers["Cross-Origin-Embedder-Policy"] = "require-corp"
+
+    if request.url.path.startswith("/api/auth/google/callback"):
+        logger.debug("Skipping security headers for Google OAuth callback route.")
+    else:
+        response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+        response.headers["Cross-Origin-Embedder-Policy"] = "require-corp"
+        logger.debug("Security headers applied: COOP + COEP")
+
     return response
 
 # Create a root API router with prefix "/api"
@@ -93,7 +105,7 @@ api_router.include_router(schedule_tune_router, prefix="/scheduled-tune", tags=[
 api_router.include_router(auth_router, prefix="/auth", tags=["auth"])
 api_router.include_router(instant_upload_router, prefix="/instant-tune", tags=["instant-tune"])
 api_router.include_router(user_mgmt_router, prefix="/user-mgmt", tags=["user-mgmt"])
-app.include_router(health_router)
+api_router.include_router(health_router, prefix="/health", tags=["Health"])
 
 # Mount the API router
 app.include_router(api_router)

@@ -4,13 +4,13 @@
             "accept": {
                 "audio/*": [".mp3", ".wav", ".mpeg"]
             },
-            "maxFileSize": 10485760
+            "maxFileSize": 20971520
         },
         "image": {
             "accept": {
                 "image/*": [".jpeg", ".png", ".gif"]
             },
-            "maxFileSize": 5242880
+            "maxFileSize": 10485760
         }
     }
 }

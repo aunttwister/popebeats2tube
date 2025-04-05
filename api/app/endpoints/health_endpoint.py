@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 
 health_router = APIRouter()
 
-@health_router.get("/health", tags=["Health"])
+@health_router.get("")
 async def health_check():
     """
     Basic liveness check endpoint.

@@ -7,7 +7,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Add support for .env variables
 RUN pip install python-dotenv
 
 EXPOSE 4011

@@ -67,3 +67,6 @@ frontend/.env.development
 frontend/.env.prod
 frontend/.env.staging
 frontend/nginx.conf
+popebeats2tube-staging-backend.tar
+popebeats2tube-staging-frontend.tar
+deploy_dev.sh
