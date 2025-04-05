@@ -1,0 +1,13 @@
+diff --git a/node_modules/eslint-config-react-app/jest.js b/node_modules/eslint-config-react-app/jest.js
+index af83e98..ce0ac50 100644
+--- a/node_modules/eslint-config-react-app/jest.js
++++ b/node_modules/eslint-config-react-app/jest.js
+@@ -20,7 +20,7 @@ module.exports = {
+     {
+       files: ['**/__tests__/**/*', '**/*.{spec,test}.*'],
+       env: {
+-        'jest/globals': true,
++        'jest': true,
+       },
+       // A subset of the recommended rules:
+       rules: {
