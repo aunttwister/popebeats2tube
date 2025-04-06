@@ -189,3 +189,33 @@ async def update_tune_fields(tune_id: int, tune: TuneDto, db: Session) -> Option
         "tags": json.loads(tune_obj.tags) if tune_obj.tags else [],
     })
 
+async def mark_tune_as_executed(tune_id: int, db: Session) -> bool:
+    """
+    Mark a tune as executed.
+
+    Args:
+    -----
+    tune_id : int
+        The ID of the tune to mark as executed.
+    db : Session
+        The database session used for the operation.
+
+    Returns:
+    --------
+    Optional[TuneDto]
+        The updated tune mapped to a DTO object if successful, otherwise None.
+
+    Logs:
+    -----
+    - DEBUG: Start and success of marking tune as executed.
+    - ERROR: Failures during database operations.
+    """
+    tune_obj = await get_tune_by_id(tune_id, db)
+    if not tune_obj:
+        return None
+
+    tune_obj.executed = True
+    db.commit()
+    db.refresh(tune_obj)
+
+    return True

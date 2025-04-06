@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from typing import List, Tuple
 
 from app.db.db import Tune

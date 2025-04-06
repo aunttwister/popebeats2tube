@@ -4,9 +4,11 @@ from app.db.db import Tune, User
 from app.logger.logging_setup import logger
 from app.services.file_processing_service import get_audio_path, get_image_path
 from app.services.generate_mp4_service import generate_video
+from app.services.schedule_tune_service import mark_tune_as_executed_service
 from app.services.tune2tube_service import upload_video
 from typing import List
 from app.settings.env_settings import YOUTUBE_ACCESS_CONCURRENCY_LIMIT
+from app.db.db import get_db_session
 
 async def process_and_upload_tunes(tunes: List[Tune], user: User):
     sem = asyncio.Semaphore(YOUTUBE_ACCESS_CONCURRENCY_LIMIT)
@@ -43,6 +45,10 @@ async def _process_and_upload_tune(tune: Tune, user: User):
         )
 
         logger.info(f"Upload complete: '{tune.video_title}'")
+        
+        db = next(get_db_session())
+
+        await mark_tune_as_executed_service(tune, db)
     except Exception as e:
         logger.error(f"Error processing tune '{tune.video_title}': {e}")
         if(os.path.exists(mp4_path)):

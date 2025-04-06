@@ -10,6 +10,7 @@ from app.repositories.schedule_tune_repository import (
     get_tune_by_id,
     get_tunes,
     insert_scheduled_tunes_batch,
+    mark_tune_as_executed,
     update_tune_fields
 )
 from app.logger.logging_setup import logger
@@ -125,3 +126,9 @@ async def delete_user_tune_service(tune_id: int, db: Session) -> bool:
         delete_directory(existing.base_dest_path)
 
     return await delete_tune_by_id(tune_id, db)
+
+async def mark_tune_as_executed_service(tune: Tune, db: Session) -> bool:
+    if (await mark_tune_as_executed(tune.id, db) == True):
+            logger.debug(f"Marked tune '{tune.video_title}' as executed.")
+    else:
+        logger.error(f"Failed to mark tune '{tune.video_title}' as executed.")
