@@ -3,7 +3,7 @@ import { Box, Button, Fade } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import UploadList from './UploadList';
-import { createBatchSchedule } from '../../services/scheduleTuneService.ts';
+import { createScheduledTunes } from '../../services/tuneService.ts';
 import { fileConverter } from '../../utils/fileConverter';
 import { toastHelper } from '../../utils/toastHelper';
 import { initialUploadContainer } from '../../constants/uploadConstants';
@@ -71,7 +71,7 @@ function ScheduledUpload() {
         }))
       );
 
-      const response = await createBatchSchedule(schedules);
+      const response = await createScheduledTunes(schedules);
       toastHelper.newMessage('success', response.title, response.message);
     } catch (error) {
       toastHelper.newMessage('error', error.title, error.message);

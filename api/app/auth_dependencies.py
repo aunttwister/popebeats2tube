@@ -3,7 +3,7 @@ from fastapi.openapi.models import OAuthFlows as OAuthFlowsModel
 from fastapi.security import OAuth2
 from fastapi import Depends, HTTPException
 import jwt
-from app.services.jwt_mgmt_service import extract_user_id_from_token
+from app.components.auth.jwt_mgmt.jwt_mgmt_service  import extract_user_id_from_token
 from app.logger.logging_setup import logger
 
 # Load configuration

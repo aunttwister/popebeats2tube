@@ -1,16 +1,13 @@
-import os
 import sys
-from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.concurrency import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRouter
-from app.endpoints.schedule_tune_endpoint import schedule_tune_router
-from app.endpoints.auth_endpoint import auth_router
-from app.endpoints.instant_tune_endpoint import instant_upload_router
-from app.endpoints.user_mgmt_endpoint import user_mgmt_router
-from app.endpoints.health_endpoint import health_router
+from app.components.tune_ops.tune_ops_endpoint import tune_ops_router
+from app.components.auth.google_oauth.google_oauth_endpoint import google_oauth_router
+from app.components.user_mgmt.user_mgmt_endpoint import user_mgmt_router
+from app.components.system_health.system_health_endpoint import system_health_router
 from app.auth_dependencies import custom_openapi
 from app.jobs.tune_upload_job import start_scheduler
 from app.logger.logging_setup import logger
@@ -101,11 +98,10 @@ async def add_security_headers(request, call_next):
 api_router = APIRouter(prefix="/api")
 
 # Include routers
-api_router.include_router(schedule_tune_router, prefix="/scheduled-tune", tags=["scheduled-tune"])
-api_router.include_router(auth_router, prefix="/auth", tags=["auth"])
-api_router.include_router(instant_upload_router, prefix="/instant-tune", tags=["instant-tune"])
-api_router.include_router(user_mgmt_router, prefix="/user-mgmt", tags=["user-mgmt"])
-api_router.include_router(health_router, prefix="/health", tags=["Health"])
+api_router.include_router(tune_ops_router, prefix="/tune-ops", tags=["Tune Operations"])
+api_router.include_router(google_oauth_router, prefix="/google-oauth", tags=["Google OAuth 2.0"])
+api_router.include_router(user_mgmt_router, prefix="/user-mgmt", tags=["User Management"])
+api_router.include_router(system_health_router, prefix="/system-health", tags=["System Health"])
 
 # Mount the API router
 app.include_router(api_router)

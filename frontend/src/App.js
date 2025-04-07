@@ -1,79 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import GoogleCallbackHandler from './components/auth/GoogleCallbackHandler';
 import LoginPage from './components/auth/LoginPage';
-import AuthenticatedRoutes from './components/layout/AuthenticatedRoutes';
-import { setToken } from './utils/tokenManager';
+import AppRoutes from './routes/AppRoutes.js';
 import './App.css';
-import { toastHelper } from './utils/toastHelper';
-import { getToken } from './utils/tokenManager'
+import { useAuth } from './context/AuthContext';
 
 const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 
 function App() {
+    const { isAuthenticated, isLoading, login } = useAuth();
     const [selectedTab, setSelectedTab] = useState(0);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-
-    useEffect(() => {
-        const checkToken = async () => {
-            try {
-                const token = await getToken(); // Get or refresh the token
-                if (token) {
-                    setIsAuthenticated(true);
-                } else {
-                    setIsAuthenticated(false);
-                }
-            } catch (error) {
-                console.error('Error checking token:', error);
-                setIsAuthenticated(false);
-                toastHelper.newMessage('error', 'Session Expired', 'Please log in again.');
-            } finally {
-                setIsLoading(false); // Stop loading after token check
-            }
-        };
-
-        checkToken();
-    }, []);
-
-    const handleLoginSuccess = (credentialResponse) => {
-        const token = credentialResponse.credential;
-        setIsLoading(true);
-    
-        fetch(`${process.env.REACT_APP_API_BASE_URL}/auth/google`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token }),
-        })
-            .then((response) => {
-                if (response.ok) {
-                    return response.json();
-                }
-                throw new Error('Failed to authenticate with backend.');
-            })
-            .then((data) => {
-                if (data.redirect) {
-                    const oauthUrl = `${data.oauth_url}&state=${encodeURIComponent(data.user_id)}`;
-                    window.open(oauthUrl, '_self');
-                } else if (data.jwt) {
-                    setToken(data.jwt, data.expires_in);
-                    localStorage.setItem('userId', data.user_id);
-                    setIsAuthenticated(true);
-                    toastHelper.newMessage('success', 'Login Successful', 'You are now authenticated.');
-                } else {
-                    throw new Error('Unexpected response from backend.');
-                }
-            })
-            .catch((error) => {
-                console.error('Error during login:', error);
-                toastHelper.newMessage('error', 'Login Failed', 'Could not authenticate user. Please try again.');
-            })
-            .finally(() => {
-                setIsLoading(false);
-            });
-    };
 
     return (
         <>
@@ -91,17 +30,16 @@ function App() {
                 <Routes>
                     <Route
                         path="/auth/google/callback"
-                        element={<GoogleCallbackHandler setIsAuthenticated={setIsAuthenticated} />}
+                        element={<GoogleCallbackHandler />} // You can inject set auth state here if needed
                     />
                     {isAuthenticated ? (
                         <Route
                             path="/*"
                             element={
-                                <AuthenticatedRoutes
-                                    isAuthenticated={isAuthenticated}
+                                <AppRoutes
                                     selectedTab={selectedTab}
                                     setSelectedTab={setSelectedTab}
-                            />
+                                />
                             }
                         />
                     ) : (
@@ -110,7 +48,7 @@ function App() {
                             element={
                                 <LoginPage
                                     isLoading={isLoading}
-                                    handleLoginSuccess={handleLoginSuccess}
+                                    handleLoginSuccess={login}
                                     GOOGLE_CLIENT_ID={GOOGLE_CLIENT_ID}
                                 />
                             }

@@ -1,47 +1,54 @@
-export const setToken = (token, expiresIn, userId) => {
+import { googleOAuthService } from '../services/googleOAuthService.ts';
+
+export const setLocalStorage = (token, expiresIn, userId) => {
     localStorage.setItem('jwt', token);
-    const expiryTime = Date.now() + expiresIn * 1000;
-    localStorage.setItem('jwtExpiry', expiryTime);
-    localStorage.setItem('userId', userId)
+    localStorage.setItem('jwtExpiry', getFutureTimestamp(expiresIn));
+    localStorage.setItem('userId', userId);
 };
 
 export const getToken = async () => {
     try {
-        const token = localStorage.getItem('jwt');
-        const expiryTime = parseInt(localStorage.getItem('jwtExpiry'), 10);
-        const now = Date.now();
-        if (token == null)
-            return;
+        const token = getStoredToken();
+        if (!token) return;
 
-        if (isNaN(expiryTime) || now >= expiryTime) {
-            console.error("Invalid expiry time. Refreshing token...");
-            await refreshToken();
-            return localStorage.getItem('jwt'); // Return the refreshed token
-        } else if (now >= expiryTime) {
-            console.warn("Token has expired. Refreshing token...");
-        } else {
-            console.log("Token is still valid.");
+        if (isTokenExpired()) {
+            console.warn("Token has expired or is invalid. Refreshing...");
+            await googleOAuthService.refreshToken();
+            return getStoredToken();
         }
 
-        return token; // Return the existing token if valid
+        return token;
     } catch (error) {
         console.error("Error in getToken:", error);
-        throw error; // Re-throw the error to handle it upstream
+        throw error;
     }
 };
 
-export const refreshToken = async () => {
+const isTokenExpired = () => {
+    const expiryTime = getTokenExpiry();
+    const now = Date.now();
+    return isNaN(expiryTime) || now >= expiryTime;
+};
+
+const getStoredToken = () => localStorage.getItem('jwt');
+
+const getTokenExpiry = () => {
+    const expiry = localStorage.getItem('jwtExpiry');
+    return expiry ? parseInt(expiry, 10) : NaN;
+};
+
+const getFutureTimestamp = (expiresInSeconds) => {
+    return (Date.now() + expiresInSeconds * 1000).toString();
+};
+
+export const getUserId = () => {
     const userId = localStorage.getItem('userId');
-    console.log(`${process.env.REACT_APP_API_BASE_URL}`)
-    const apiUrl = `${process.env.REACT_APP_API_BASE_URL}/auth/token-refresh`;
+    if (!userId) throw new Error('No user ID found in local storage.');
+    return userId;
+};
 
-    const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: userId }),
-    });
-
-    if (!response.ok) throw new Error('Failed to refresh token.');
-    const data = await response.json();
-    setToken(data.jwt, data.expires_in, data.user_id);
+export const clearStorage = () => {
+    localStorage.removeItem('jwt');
+    localStorage.removeItem('jwtExpiry');
+    localStorage.removeItem('userId');
 };

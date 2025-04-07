@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Box, Button, CircularProgress, Typography, Fade } from '@mui/material';
 import UploadList from './UploadList';
-import { createBatchInstant } from '../../services/instantTuneService.ts';
+import { createInstantTunes } from '../../services/tuneService.ts';
 import { fileConverter } from '../../utils/fileConverter';
 import { toastHelper } from '../../utils/toastHelper';
 import { initialUploadContainer } from '../../constants/uploadConstants';
@@ -102,7 +102,7 @@ function InstantUpload() {
         }))
       );
 
-      const response = await createBatchInstant(instantTunes);
+      const response = await createInstantTunes(instantTunes);
       const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
 
       toastHelper.newMessage(

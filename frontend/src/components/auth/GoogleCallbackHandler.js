@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toastHelper } from '../../utils/toastHelper';
-import { setToken } from '../../utils/tokenManager';
+import { setLocalStorage } from '../../utils/tokenManager';
+import { googleOAuthService } from '../../services/googleOAuthService.ts';
 
 const GoogleCallbackHandler = ({ setIsAuthenticated }) => {
     const [searchParams] = useSearchParams();
@@ -11,24 +12,18 @@ const GoogleCallbackHandler = ({ setIsAuthenticated }) => {
         const authCode = searchParams.get('code');
         const user_id = searchParams.get('state');
         const error = searchParams.get('error');
-
+    
         if (error) {
             toastHelper.newMessage('error', 'Login Failed', 'Google OAuth failed. Please try again.');
             navigate('/');
             return;
         }
-
+    
         if (authCode) {
-            fetch(`${process.env.REACT_APP_API_BASE_URL}/auth/google/callback`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code: authCode, user_id }),
-            })
-                .then((response) => response.json())
+            googleOAuthService.callback({ code: authCode, user_id })
                 .then((data) => {
                     if (data.jwt) {
-                        setToken(data.jwt, data.expires_in)
-                        localStorage.setItem('userId', data.user_id);
+                        setLocalStorage(data.jwt, data.expires_in, data.user_id)
                         setIsAuthenticated(true);
                         navigate('/');
                         toastHelper.newMessage('success', 'Login Successful', 'You are now authenticated.');

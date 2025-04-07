@@ -1,5 +1,4 @@
 from contextlib import contextmanager
-import os
 from typing import Generator
 import uuid
 import subprocess

@@ -13,9 +13,12 @@ import {
   MenuItem,
   Chip,
 } from '@mui/material';
-import DropzoneField from './DropzoneField'; // Import the separated component
-import './UploadContainer.css'; // Import external CSS
+import DropzoneField from './DropzoneField';
+import './UploadContainer.css';
 import config from '../../config.json';
+import AudiotrackIcon from '@mui/icons-material/Audiotrack';
+import ImageIcon from '@mui/icons-material/Image';
+import Tooltip from '@mui/material/Tooltip';
 
 function UploadContainer({ onDropAudio, onDropImage, onChange, containerIndex, audioFile, imageFile, errors = {} }) {
   const [title, setTitle] = useState('');
@@ -76,13 +79,26 @@ function UploadContainer({ onDropAudio, onDropImage, onChange, containerIndex, a
 
   const handleTagKeyDown = (e) => {
     if (e.key === 'Enter' && e.target.value.trim()) {
-      setTags([...tags, e.target.value.trim()]);
+      e.preventDefault();
+  
+      const rawInput = e.target.value;
+      const inputTags = rawInput
+        .split(',')
+        .map(tag => tag.trim())
+        .filter(tag => tag.length > 0 && !tags.includes(tag)); // remove empty and duplicates
+  
+      setTags([...tags, ...inputTags]);
       e.target.value = '';
     }
   };
 
   const handleTagDelete = (tagToDelete) => {
-    setTags(tags.filter((tag) => tag !== tagToDelete));
+    const index = tags.indexOf(tagToDelete);
+    if (index !== -1) {
+      const newTags = [...tags];
+      newTags.splice(index, 1);
+      setTags(newTags);
+    }
   };
 
   return (
@@ -91,23 +107,43 @@ function UploadContainer({ onDropAudio, onDropImage, onChange, containerIndex, a
 
       <DropzoneField
         onDrop={(files) => onDropAudio(containerIndex, files)}
-        label="Drag and drop audio file here"
+        label={
+          <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" textAlign="center">
+            <AudiotrackIcon
+              sx={{
+                fontSize: 36,
+                color: audioFile ? '#2ac759' : '#aaa',
+              }}
+            />
+            <Typography variant="body2">Drag and drop audio file here</Typography>
+            {audioFile && (
+              <Typography variant="caption">Uploaded: {audioFile.name}</Typography>
+            )}
+          </Box>
+        }
         file={audioFile}
         acceptedFileTypes={audioConfig.accept}
         maxFileSize={audioConfig.maxFileSize}
         isValid={!errors.audio}
-        setIsValid={() => {}} // no-op unless you need internal control
+        setIsValid={() => {}}
       />
-      {errors.audio && (
-        <Typography variant="caption" color="error">
-          {errors.audio}
-        </Typography>
-      )}
-
 
       <DropzoneField
         onDrop={(files) => onDropImage(containerIndex, files)}
-        label="Drag and drop image file here"
+        label={
+          <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" textAlign="center">
+            <ImageIcon
+              sx={{
+                fontSize: 36,
+                color: imageFile ? '#2ac759' : '#aaa',
+              }}
+            />
+            <Typography variant="body2">Drag and drop image file here</Typography>
+            {imageFile && (
+              <Typography variant="caption">Uploaded: {imageFile.name}</Typography>
+            )}
+          </Box>
+        }
         file={imageFile}
         acceptedFileTypes={imageConfig.accept}
         maxFileSize={imageConfig.maxFileSize}
@@ -143,14 +179,46 @@ function UploadContainer({ onDropAudio, onDropImage, onChange, containerIndex, a
       <TextField
         fullWidth
         margin="normal"
-        label="Add Tags (Press Enter to Add)"
+        label="Add Tags (Enter or space-separated)"
         onKeyDown={handleTagKeyDown}
       />
-      <Box className="tags-container">
-        {tags.map((tag, index) => (
-          <Chip key={index} label={tag} onDelete={() => handleTagDelete(tag)} />
-        ))}
+      {tags.length > 0 && (
+      <Box sx={{ mt: 1, width: '100%', maxWidth: '100%' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mb: 1,
+            width: '100%',
+            maxWidth: '100%',
+          }}
+        >
+          <Typography variant="caption" color="text.secondary">
+            Tags ({tags.length})
+          </Typography>
+          <Typography
+            onClick={() => setTags([])}
+            variant="caption"
+            color="error"
+            sx={{ cursor: 'pointer' }}
+          >
+            Clear All
+          </Typography>
+        </Box>
+
+        <Box className="tags-wrapper">
+          {tags.map((tag, index) => (
+            <Tooltip key={index} title={tag}>
+              <Chip
+                label={tag}
+                onDelete={() => handleTagDelete(tag)}
+              />
+            </Tooltip>
+          ))}
+        </Box>
       </Box>
+    )}
 
       <FormControl fullWidth margin="normal" error={Boolean(errors.category)}>
         <FormLabel>Category</FormLabel>

@@ -35,4 +35,27 @@
     margin-top: 8px;
     color: #333;
   }
+
+  .tags-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .tags-wrapper .MuiChip-root {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    word-break: break-word;
+  }
+  
+  @media (max-width: 600px) {
+    .tags-wrapper .MuiChip-root {
+      max-width: 300px;
+    }
+  }
   

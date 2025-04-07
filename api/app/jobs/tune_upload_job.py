@@ -4,8 +4,8 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime, timezone
 from collections import defaultdict
 from app.db.db import get_db_session_context, User
-from app.repositories.schedule_tune_repository import get_tunes
-from app.services.upload_service import process_and_upload_tunes
+from app.components.tune_ops.tune_ops_repository import get_tunes
+from app.components.upload.upload_processing.upload_processing_service import process_and_upload_tunes
 from app.logger.logging_setup import logger
 from app.settings.env_settings import SCHEDULER_INTERVAL_MINUTES
 

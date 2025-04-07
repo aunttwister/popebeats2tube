@@ -5,7 +5,15 @@ import UploadContainer from '../UploadContainer/UploadContainer';
 
 function UploadForm({ container, index, onUpdate, errors }) {
   return (
-    <Box key={index} sx={{ marginBottom: 2 }}>
+      <Box
+        key={index}
+        sx={{
+          marginBottom: 2,
+          width: '100%',
+          maxWidth: '800px', // or whatever fits your layout best
+          marginX: 'auto',
+        }}
+      >
       <UploadContainer
         containerIndex={index}
         onDropAudio={(idx, files) => onUpdate(idx, { audio: files[0] })}

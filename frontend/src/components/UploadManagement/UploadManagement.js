@@ -19,7 +19,7 @@ import UploadTable from './UploadTable';
 import PaginationControl from './PaginationControl';
 import DeleteModal from './DeleteModal';
 import EditModal from './EditModal';
-import { getSchedules, editSchedule, removeSchedule } from '../../services/scheduleTuneService.ts';
+import { getSchedules, editSchedule, removeSchedule } from '../../services/tuneService.ts';
 import { toastHelper } from '../../utils/toastHelper';
 import './UploadManagement.css';
 
