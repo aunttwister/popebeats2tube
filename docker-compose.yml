@@ -1,6 +1,6 @@
 services:
   backend:
-    image: popebeats2tube-staging-backend
+    image: popebeats2tube-backend
     build:
       context: ./api
     container_name: popebeats-backend

@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-import json
 from app.db.db import Tune
 from app.dto import TuneDto
 
@@ -20,6 +19,10 @@ def map_tune_dto_to_model(tune: TuneDto, user_id: str, base_dest_path: str) -> T
         embeddable=tune.embeddable,
         license=tune.license,
         category=tune.category,
-        tags=json.dumps(tune.tags),
+        tags=format_tags_for_db(tune.tags),
         video_description=tune.video_description,
     )
+
+
+def format_tags_for_db(tags: list[str]) -> str:
+    return ",".join(tag.strip() for tag in tags if isinstance(tag, str)).strip()

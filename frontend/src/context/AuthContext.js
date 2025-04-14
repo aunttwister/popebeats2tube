@@ -7,13 +7,14 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(true); // 👈 flag used to delay callback init
 
     useEffect(() => {
         const checkToken = async () => {
             try {
                 const token = await getToken();
                 setIsAuthenticated(!!token);
+
                 if (!token) {
                     toastHelper.newMessage('info', 'Session Expired', 'Please log in again.');
                 }
@@ -22,7 +23,7 @@ export const AuthProvider = ({ children }) => {
                 setIsAuthenticated(false);
                 toastHelper.newMessage('error', 'Session Error', 'Please log in again.');
             } finally {
-                setIsLoading(false);
+                setIsLoading(false); // ✅ signal readiness
             }
         };
 
@@ -37,7 +38,7 @@ export const AuthProvider = ({ children }) => {
             const data = await googleOAuthService.login(token);
             if (data.redirect) {
                 const oauthUrl = `${data.oauth_url}&state=${encodeURIComponent(data.user_id)}`;
-                window.open(oauthUrl, '_self');
+                window.open(oauthUrl, '_self'); // ✅ full redirect
             } else if (data.jwt) {
                 setLocalStorage(data.jwt, data.expires_in, data.user_id);
                 setIsAuthenticated(true);
@@ -59,7 +60,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ isAuthenticated, isLoading, login, logout }}>
+        <AuthContext.Provider value={{ isAuthenticated, isLoading, setIsAuthenticated, login, logout }}>
             {children}
         </AuthContext.Provider>
     );

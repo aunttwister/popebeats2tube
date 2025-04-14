@@ -11,7 +11,7 @@ from app.components.system_health.system_health_endpoint import system_health_ro
 from app.auth_dependencies import custom_openapi
 from app.jobs.tune_upload_job import start_scheduler
 from app.logger.logging_setup import logger
-from app.settings.env_settings import KILL_SWITCH_ENABLED, MAINTENANCE_MODE_ENABLED, CORS_ORIGINS
+from app.settings.env_settings import KILL_SWITCH_ENABLED, MAINTENANCE_MODE_ENABLED, CORS_ORIGINS, GOOGLE_OAUTH_REDIRECT_URI_PATH
 from app.utils.http_response_util import (
     not_found_handler,
     forbidden_handler,
@@ -85,7 +85,7 @@ async def maintenance_mode_middleware(request: Request, call_next):
 async def add_security_headers(request, call_next):
     response = await call_next(request)
 
-    if request.url.path.startswith("/api/auth/google/callback"):
+    if request.url.path.startswith(GOOGLE_OAUTH_REDIRECT_URI_PATH):
         logger.debug("Skipping security headers for Google OAuth callback route.")
     else:
         response.headers["Cross-Origin-Opener-Policy"] = "same-origin"

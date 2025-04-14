@@ -69,4 +69,6 @@ frontend/.env.staging
 frontend/nginx.conf
 popebeats2tube-staging-backend.tar
 popebeats2tube-staging-frontend.tar
-deploy_dev.sh
+deploy_popebeats2tube.sh
+docker-compose.yml
+popebeats2tube-backend.tar

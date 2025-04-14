@@ -14,6 +14,8 @@ interface GoogleCallbackPayload {
   user_id: string;
 }
 
+let isRedirecting = false;
+
 export const googleOAuthService = {
   login: async (token: string): Promise<OAuthLoginResponse> => {
     const response = await apiClient.post<OAuthLoginResponse>('/google-oauth/login', { token });
@@ -21,7 +23,7 @@ export const googleOAuthService = {
   },
 
   callback: async (payload: GoogleCallbackPayload): Promise<OAuthLoginResponse> => {
-    const response = await apiClient.post<OAuthLoginResponse>('/google-oauth/google/callback', payload);
+    const response = await apiClient.post<OAuthLoginResponse>('/google-oauth/login-callback', payload);
     return response.data;
   },
 
@@ -33,6 +35,15 @@ export const googleOAuthService = {
     });
 
     const data = response.data;
+
+    if (data.redirect && data.oauth_url && data.user_id) {
+      if (isRedirecting) return; // ✅ lock it
+      isRedirecting = true;
+      const oauthUrl = `${data.oauth_url}&state=${encodeURIComponent(data.user_id)}`;
+      window.location.href = oauthUrl;
+      return;
+    }
+
     if (!data.jwt) throw new Error('Failed to refresh token: No JWT in response.');
 
     setLocalStorage(data.jwt, data.expires_in, data.user_id);

@@ -20,6 +20,7 @@ export const getToken = async () => {
         return token;
     } catch (error) {
         console.error("Error in getToken:", error);
+        clearStorage(); // Prevent infinite redirect loops
         throw error;
     }
 };

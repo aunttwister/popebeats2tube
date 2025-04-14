@@ -116,9 +116,6 @@ function UploadContainer({ onDropAudio, onDropImage, onChange, containerIndex, a
               }}
             />
             <Typography variant="body2">Drag and drop audio file here</Typography>
-            {audioFile && (
-              <Typography variant="caption">Uploaded: {audioFile.name}</Typography>
-            )}
           </Box>
         }
         file={audioFile}
@@ -139,9 +136,6 @@ function UploadContainer({ onDropAudio, onDropImage, onChange, containerIndex, a
               }}
             />
             <Typography variant="body2">Drag and drop image file here</Typography>
-            {imageFile && (
-              <Typography variant="caption">Uploaded: {imageFile.name}</Typography>
-            )}
           </Box>
         }
         file={imageFile}

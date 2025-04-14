@@ -7,8 +7,10 @@ import LoginPage from './components/auth/LoginPage';
 import AppRoutes from './routes/AppRoutes.js';
 import './App.css';
 import { useAuth } from './context/AuthContext';
+import NotFoundPage from './components/common/NotFoundPage';
 
 const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
+const GOOGLE_OAUTH_CALLBACK_PATH = process.env.REACT_APP_GOOGLE_OAUTH_CALLBACK_PATH || "/google-oauth/login-callback";
 
 function App() {
     const { isAuthenticated, isLoading, login } = useAuth();
@@ -28,10 +30,8 @@ function App() {
             />
             <Router>
                 <Routes>
-                    <Route
-                        path="/auth/google/callback"
-                        element={<GoogleCallbackHandler />} // You can inject set auth state here if needed
-                    />
+                    <Route path={GOOGLE_OAUTH_CALLBACK_PATH} element={<GoogleCallbackHandler />} />
+
                     {isAuthenticated ? (
                         <Route
                             path="/*"
@@ -54,6 +54,8 @@ function App() {
                             }
                         />
                     )}
+
+                    <Route path="*" element={<NotFoundPage />} />
                 </Routes>
             </Router>
         </>

@@ -97,8 +97,28 @@ async def handle_token_refresh(user_id: str, db: Session):
         user = update_user_credentials_service(user.id, access_token, refresh_token, expiry, db)
         return generate_jwt_response(user.id)
 
+    except httpx.HTTPStatusError as http_err:
+        # Decode and handle Google's error response
+        try:
+            error_data = http_err.response.json()
+            if error_data.get("error") == "invalid_grant":
+                logger.warning("Refresh token expired or revoked. Re-authentication required.")
+                oauth_url = construct_oauth_url()
+                return {
+                    "redirect": True,
+                    "oauth_url": oauth_url,
+                    "user_id": user.id
+                }
+        except Exception:
+            pass  # fallback to generic error
+
+        raise HTTPException(
+            status_code=http_err.response.status_code,
+            detail=f"Token refresh failed: {http_err.response.text}"
+        )
+
     except Exception as e:
-        logger.error(f"Failed to refresh token: {str(e)}")
+        logger.error(f"Unhandled error during token refresh: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to refresh token")
 
 

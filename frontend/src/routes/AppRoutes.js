@@ -1,5 +1,3 @@
-// src/routes/AppRoutes.js
-
 import React from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import Navbar from '../components/core/Navbar';
@@ -7,6 +5,7 @@ import PrivateRoute from '../PrivateRoute';
 import InstantUpload from '../components/upload/InstantUpload';
 import ScheduledUpload from '../components/upload/ScheduledUpload';
 import UploadManagement from '../components/UploadManagement/UploadManagement';
+import NotFoundPage from '../components/common/NotFoundPage';
 import './AppRoutes.css';
 
 import { useAuth } from '../context/AuthContext';
@@ -16,8 +15,8 @@ const AppRoutes = ({ selectedTab, setSelectedTab }) => {
     const { isAuthenticated, logout } = useAuth();
 
     const handleLogout = () => {
-        logout();         // clears storage and updates state
-        navigate('/');    // redirect to login or home
+        logout();
+        navigate('/');
     };
 
     return (
@@ -41,6 +40,7 @@ const AppRoutes = ({ selectedTab, setSelectedTab }) => {
                     </PrivateRoute>
                 }
             />
+            <Route path="*" element={<NotFoundPage />} />
         </Routes>
     );
 };
