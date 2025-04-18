@@ -9,14 +9,14 @@ const GoogleCallbackHandler = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const hasRunRef = useRef(false);
-  const { setIsAuthenticated, isLoading } = useAuth(); // ✅ context + loading state
+  const { setIsAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
-    // wait for context to be ready
     if (isLoading || hasRunRef.current) return;
 
     const authCode = searchParams.get('code');
     const user_id = searchParams.get('state');
+    const user_email = searchParams.get('login_hint')
     const error = searchParams.get('error');
 
     if (!authCode || !user_id || error) {
@@ -28,10 +28,10 @@ const GoogleCallbackHandler = () => {
     hasRunRef.current = true;
 
     googleOAuthService
-      .callback({ code: authCode, user_id })
+      .callback({ code: authCode, user_id, user_email})
       .then((data) => {
         if (data.jwt) {
-          setLocalStorage(data.jwt, data.expires_in, data.user_id);
+          setLocalStorage(data.jwt, data.expires_in, data.user_id, data.user_email);
           setIsAuthenticated(true); // ✅ safe now
           toastHelper.newMessage('success', 'Login Successful', 'You are now authenticated.');
           navigate('/');

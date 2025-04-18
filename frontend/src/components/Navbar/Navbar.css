@@ -1,0 +1,38 @@
+.navbar-appbar {
+    background-color: var(--mui-primary-main, #6a1b9a); /* fallback */
+  }
+  
+  .navbar-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .navbar-title {
+    flex-grow: 1;
+    cursor: pointer;
+    color: white !important;
+    font-weight: bold;
+  }
+  
+  .navbar-tabs-container {
+    display: flex;
+    align-items: center;
+  }
+  
+  .navbar-divider {
+    height: 30px;
+    border-left: 1px solid white;
+    margin: 0 16px;
+  }
+  
+  .navbar-icon {
+    margin-right: 8px;
+  }
+  
+  .navbar-user-greeting {
+    font-weight: bold;
+    color: #888;
+    pointer-events: none;
+  }
+  

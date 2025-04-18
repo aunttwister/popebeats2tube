@@ -1,9 +1,11 @@
 import { googleOAuthService } from '../services/googleOAuthService.ts';
 
-export const setLocalStorage = (token, expiresIn, userId) => {
+export const setLocalStorage = (token, expiresIn, userId, userEmail) => {
     localStorage.setItem('jwt', token);
     localStorage.setItem('jwtExpiry', getFutureTimestamp(expiresIn));
-    localStorage.setItem('userId', userId);
+
+    // ✅ Optional unified object, purely for convenience access
+    localStorage.setItem('user', JSON.stringify({ id: userId, email: userEmail }));
 };
 
 export const getToken = async () => {
@@ -42,14 +44,26 @@ const getFutureTimestamp = (expiresInSeconds) => {
     return (Date.now() + expiresInSeconds * 1000).toString();
 };
 
+// ✅ Fallback-compatible user getter
+export const getUser = () => {
+    const user = localStorage.getItem("user");
+    return user ? JSON.parse(user) : {};
+};
+
 export const getUserId = () => {
-    const userId = localStorage.getItem('userId');
+    const userId = getUser()?.id;
     if (!userId) throw new Error('No user ID found in local storage.');
     return userId;
 };
 
+export const getUserEmail = () => {
+    const userEmail = getUser()?.email;
+    if (!userEmail) throw new Error('No user email found in local storage.');
+    return userEmail;
+};
+
 export const clearStorage = () => {
-    localStorage.removeItem('jwt');
-    localStorage.removeItem('jwtExpiry');
-    localStorage.removeItem('userId');
+    localStorage.removeItem("jwt");
+    localStorage.removeItem("jwtExpiry");
+    localStorage.removeItem("user");
 };

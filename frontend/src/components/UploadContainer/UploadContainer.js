@@ -103,7 +103,9 @@ function UploadContainer({ onDropAudio, onDropImage, onChange, containerIndex, a
 
   return (
     <Box className="upload-container">
-      <Typography variant="subtitle1">Upload Container {containerIndex + 1}</Typography>
+      <Typography variant="subtitle" gutterBottom>
+        🎵 Track {containerIndex + 1}
+      </Typography>
 
       <DropzoneField
         onDrop={(files) => onDropAudio(containerIndex, files)}
@@ -165,7 +167,7 @@ function UploadContainer({ onDropAudio, onDropImage, onChange, containerIndex, a
         margin="normal"
         label="YouTube Video Description"
         multiline
-        rows={3}
+        rows={8}
         value={description}
         onChange={handleDescriptionChange}
       />

@@ -21,6 +21,7 @@ async def process_and_upload_tunes(tunes: List[Tune], user: User):
 
 async def _process_and_upload_tune(tune: Tune, user: User):
     logger.debug(f"Processing tune '{tune.video_title}' for user '{user.id}'")
+    mp4_path = None
     try:
         audio_path = get_audio_path(tune)
         img_path = get_image_path(tune)
@@ -51,6 +52,7 @@ async def _process_and_upload_tune(tune: Tune, user: User):
         await mark_tune_as_executed_service(tune, db)
     except Exception as e:
         logger.error(f"Error processing tune '{tune.video_title}': {e}")
-        if(os.path.exists(mp4_path)):
+        if mp4_path and os.path.exists(mp4_path):
             os.remove(mp4_path)
         raise
+

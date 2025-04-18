@@ -53,7 +53,6 @@ function InstantUpload() {
   }, [isUploading]);
 
   const resetForm = () => {
-    // Reset everything to initial
     setUploadContainers([{ ...initialUploadContainer, uploadDate: undefined }]);
     setErrorsList([]);
     setHasSubmitted(false);
@@ -121,6 +120,10 @@ function InstantUpload() {
 
   return (
     <Box sx={{ padding: 3 }}>
+      <Typography variant="h5" gutterBottom>
+        Instant Uploads
+      </Typography>
+
       <Fade in timeout={500}>
         <Box>
           <UploadList
@@ -147,7 +150,7 @@ function InstantUpload() {
           sx={{ marginRight: 2 }}
           disabled={isUploading}
         >
-          Add More Instant Containers
+          Add Another Track
         </Button>
 
         <Button

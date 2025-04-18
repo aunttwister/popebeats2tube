@@ -1,5 +1,7 @@
+// services/googleOAuthService.ts
 import apiClient from './apiClient.ts';
 import { getUserId, setLocalStorage } from '../utils/tokenManager.js';
+import { redirectToOAuth } from '../utils/redirectHelper.js';
 
 interface OAuthLoginResponse {
   redirect?: boolean;
@@ -7,11 +9,13 @@ interface OAuthLoginResponse {
   user_id?: string;
   jwt?: string;
   expires_in?: number;
+  user_email?: string;
 }
 
 interface GoogleCallbackPayload {
   code: string;
   user_id: string;
+  user_email: string;
 }
 
 let isRedirecting = false;
@@ -37,15 +41,14 @@ export const googleOAuthService = {
     const data = response.data;
 
     if (data.redirect && data.oauth_url && data.user_id) {
-      if (isRedirecting) return; // ✅ lock it
+      if (isRedirecting) return;
       isRedirecting = true;
-      const oauthUrl = `${data.oauth_url}&state=${encodeURIComponent(data.user_id)}`;
-      window.location.href = oauthUrl;
+      redirectToOAuth(data.oauth_url);
       return;
     }
 
     if (!data.jwt) throw new Error('Failed to refresh token: No JWT in response.');
 
-    setLocalStorage(data.jwt, data.expires_in, data.user_id);
+    setLocalStorage(data.jwt, data.expires_in, data.user_id, data.user_email);
   }
 };

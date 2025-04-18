@@ -3,16 +3,32 @@ import 'react-toastify/dist/ReactToastify.css';
 
 const newMessage = (type, title, message) => {
     const content = (
-        <div style={{ textAlign: 'left' }}>
-            <h4 style={{ marginBottom: '5px' }}>{title}</h4>
-            <p style={{ margin: 0 }}>{message}</p>
+        <div style={{ fontSize: '0.85rem', lineHeight: '1.2rem' }}>
+            {title && <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>{title}</div>}
+            <div>{message}</div>
         </div>
     );
 
+    const options = {
+        position: 'bottom-right',
+        autoClose: 3000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: false,
+        style: {
+            minHeight: '40px',
+            padding: '8px 12px',
+            fontSize: '0.85rem',
+        },
+    };
+
     if (type === 'success') {
-        toast.success(content);
+        toast.success(content, options);
     } else if (type === 'error') {
-        toast.error(content);
+        toast.error(content, options);
+    } else if (type === 'info') {
+        toast.info(content, options);
     } else {
         console.warn('Unsupported toast type:', type);
     }

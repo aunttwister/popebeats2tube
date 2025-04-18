@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Button, Fade } from '@mui/material';
+import { Box, Button, Fade, Typography } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import UploadList from './UploadList';
@@ -81,7 +81,11 @@ function ScheduledUpload() {
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Box sx={{ padding: 3 }}>
-         <Fade in timeout={500}>
+        <Typography variant="h5" gutterBottom>
+          Scheduled Uploads
+        </Typography>
+
+        <Fade in timeout={500}>
           <Box>
             <UploadList
               uploadContainers={uploadContainers}
@@ -89,7 +93,8 @@ function ScheduledUpload() {
               errorsList={errorsList}
             />
           </Box>
-         </Fade>
+        </Fade>
+
         <Button
           variant="contained"
           onClick={handleAddContainer}

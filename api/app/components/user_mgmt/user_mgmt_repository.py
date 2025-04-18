@@ -34,22 +34,13 @@ def get_user_by_id(user_id: str, db: Session):
     return db.query(User).filter(User.id == str(user_id)).first()
 
 def update_user_credentials(user: User, youtube_access_token: str, youtube_refresh_token: str, youtube_token_expiry: datetime, db: Session):
-    if not user.youtube_access_token:
-        user.youtube_access_token = youtube_access_token
-    if not user.youtube_refresh_token:
-        user.youtube_refresh_token = youtube_refresh_token
-    if not user.youtube_token_expiry:
-        user.youtube_token_expiry = youtube_token_expiry
-    db.commit()
-    return user
+    user.youtube_access_token = youtube_access_token
+    user.youtube_token_expiry = youtube_token_expiry
 
-def update_user_credentials(user: User, youtube_access_token: str, youtube_refresh_token: str, youtube_token_expiry: datetime, db: Session):
-    if not user.youtube_access_token:
-        user.youtube_access_token = youtube_access_token
-    if not user.youtube_refresh_token:
+    # Only update refresh_token if Google returned a new one
+    if youtube_refresh_token:
         user.youtube_refresh_token = youtube_refresh_token
-    if not user.youtube_token_expiry:
-        user.youtube_token_expiry = youtube_token_expiry
+
     db.commit()
     return user
     

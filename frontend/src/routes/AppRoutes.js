@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
-import Navbar from '../components/core/Navbar';
+import Navbar from '../components/Navbar/Navbar';
 import PrivateRoute from '../PrivateRoute';
 import InstantUpload from '../components/upload/InstantUpload';
 import ScheduledUpload from '../components/upload/ScheduledUpload';

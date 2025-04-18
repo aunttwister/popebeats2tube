@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException
 from app.settings.env_settings import GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_REDIRECT_URI, GOOGLE_OAUTH_SCOPES
 
-def construct_oauth_url() -> str:
+def construct_oauth_url(user_email: str, user_id: str) -> str:
     return (
         "https://accounts.google.com/o/oauth2/v2/auth?"
         f"client_id={GOOGLE_OAUTH_CLIENT_ID}"
@@ -11,6 +11,8 @@ def construct_oauth_url() -> str:
         f"&scope={GOOGLE_OAUTH_SCOPES}"
         f"&access_type=offline"
         f"&prompt=consent"
+        f"&login_hint={user_email}"
+        f"&state={user_id}"
     )
 
 def calculate_token_expiry(expires_in_seconds: int) -> datetime:

@@ -18,16 +18,7 @@ function App() {
 
     return (
         <>
-            <ToastContainer
-                position="bottom-right"
-                autoClose={3000}
-                hideProgressBar={false}
-                newestOnTop
-                closeOnClick
-                pauseOnHover
-                draggable
-                theme="colored"
-            />
+            <ToastContainer/>
             <Router>
                 <Routes>
                     <Route path={GOOGLE_OAUTH_CALLBACK_PATH} element={<GoogleCallbackHandler />} />

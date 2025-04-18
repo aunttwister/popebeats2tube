@@ -43,6 +43,7 @@ def build_ffmpeg_command(audio_path: str, image_path: str, mp4_path: str, durati
     """
     return [
         FFMPEG_PATH,
+        '-y',
         '-loop', '1',
         '-framerate', '1',
         '-i', image_path,
@@ -73,9 +74,13 @@ def generate_video(audio_path: str, image_path: str, output_path: str, video_tit
     logger.debug(f"FFmpeg command: {' '.join(ffmpeg_cmd)}")
 
     try:
-        subprocess.run(ffmpeg_cmd, check=True)
+        result = subprocess.run(ffmpeg_cmd, check=True, capture_output=True)
+        logger.debug(f"FFmpeg stdout: {result.stdout.decode().strip()}")
+        logger.debug(f"FFmpeg stderr: {result.stderr.decode().strip()}")
         logger.info(f"Video successfully generated at: {mp4_path}")
         return mp4_path
     except subprocess.CalledProcessError as e:
-        logger.error(f"FFmpeg failed to generate video: {e.output.decode()}")
+        stdout = e.stdout.decode().strip() if e.stdout else "No stdout"
+        stderr = e.stderr.decode().strip() if e.stderr else "No stderr"
+        logger.error(f"FFmpeg failed to generate video:\nstdout: {stdout}\nstderr: {stderr}")
         raise RuntimeError("Video generation failed.") from e
