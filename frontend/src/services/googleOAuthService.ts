@@ -1,7 +1,6 @@
 // services/googleOAuthService.ts
 import apiClient from './apiClient.ts';
-import { getUserId, setLocalStorage } from '../utils/tokenManager.js';
-import { redirectToOAuth } from '../utils/redirectHelper.js';
+import { getUserId } from '../utils/oauthHelper.js';
 
 interface OAuthLoginResponse {
   redirect?: boolean;
@@ -18,8 +17,6 @@ interface GoogleCallbackPayload {
   user_email: string;
 }
 
-let isRedirecting = false;
-
 export const googleOAuthService = {
   login: async (token: string): Promise<OAuthLoginResponse> => {
     const response = await apiClient.post<OAuthLoginResponse>('/google-oauth/login', { token });
@@ -31,25 +28,11 @@ export const googleOAuthService = {
     return response.data;
   },
 
-  refreshToken: async (): Promise<void> => {
+  refreshToken: async (): Promise<OAuthLoginResponse> => {
     const userId = getUserId();
-    console.log('entered refreshToken')
-
     const response = await apiClient.post<OAuthLoginResponse>('/google-oauth/token-refresh', {
-      user_id: userId,
+        user_id: userId,
     });
-
-    const data = response.data;
-
-    if (data.redirect && data.oauth_url && data.user_id) {
-      if (isRedirecting) return;
-      isRedirecting = true;
-      redirectToOAuth(data.oauth_url);
-      return;
-    }
-
-    if (!data.jwt) throw new Error('Failed to refresh token: No JWT in response.');
-
-    setLocalStorage(data.jwt, data.expires_in, data.user_id, data.user_email);
+    return response.data;
   }
 };

@@ -23,7 +23,7 @@ import { useTheme } from '@mui/material/styles';
 import { useAuth } from '../auth/AuthContext';
 
 import './Navbar.css';
-import { getUserEmail } from '../../utils/tokenManager';
+import { getUserEmail } from '../../utils/oauthHelper';
 
 function Navbar({ selectedTab, setSelectedTab }) {
     const theme = useTheme();
