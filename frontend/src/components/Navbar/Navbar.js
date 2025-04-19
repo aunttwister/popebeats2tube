@@ -20,7 +20,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../auth/AuthContext';
 
 import './Navbar.css';
 import { getUserEmail } from '../../utils/tokenManager';

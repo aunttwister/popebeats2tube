@@ -12,11 +12,10 @@ export const getToken = async () => {
     try {
         const token = getStoredToken();
         if (!token) return;
-
         if (isTokenExpired()) {
             console.warn("Token has expired or is invalid. Refreshing...");
             await googleOAuthService.refreshToken();
-            return getStoredToken();
+            return token;
         }
 
         return token;
@@ -33,7 +32,11 @@ const isTokenExpired = () => {
     return isNaN(expiryTime) || now >= expiryTime;
 };
 
-const getStoredToken = () => localStorage.getItem('jwt');
+const getStoredToken = () => {
+    console.log("token: " + localStorage.getItem('jwt'))
+    return localStorage.getItem('jwt')
+};
+
 
 const getTokenExpiry = () => {
     const expiry = localStorage.getItem('jwtExpiry');

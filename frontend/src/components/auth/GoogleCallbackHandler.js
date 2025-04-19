@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toastHelper } from '../../utils/toastHelper';
 import { setLocalStorage } from '../../utils/tokenManager';
 import { googleOAuthService } from '../../services/googleOAuthService.ts';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from './AuthContext';
 
 const GoogleCallbackHandler = () => {
   const [searchParams] = useSearchParams();
@@ -32,7 +32,7 @@ const GoogleCallbackHandler = () => {
       .then((data) => {
         if (data.jwt) {
           setLocalStorage(data.jwt, data.expires_in, data.user_id, data.user_email);
-          setIsAuthenticated(true); // ✅ safe now
+          setIsAuthenticated(true);
           toastHelper.newMessage('success', 'Login Successful', 'You are now authenticated.');
           navigate('/');
         } else {

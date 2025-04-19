@@ -6,7 +6,7 @@ import GoogleCallbackHandler from './components/auth/GoogleCallbackHandler';
 import LoginPage from './components/auth/LoginPage';
 import AppRoutes from './routes/AppRoutes.js';
 import './App.css';
-import { useAuth } from './context/AuthContext';
+import { useAuth } from './components/auth/AuthContext';
 import NotFoundPage from './components/common/NotFoundPage';
 
 const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
@@ -21,30 +21,28 @@ function App() {
             <ToastContainer/>
             <Router>
                 <Routes>
-                    <Route path={GOOGLE_OAUTH_CALLBACK_PATH} element={<GoogleCallbackHandler />} />
+                    <Route
+                    path={GOOGLE_OAUTH_CALLBACK_PATH}
+                    element={<GoogleCallbackHandler />}
+                    />
 
-                    {isAuthenticated ? (
-                        <Route
-                            path="/*"
-                            element={
-                                <AppRoutes
-                                    selectedTab={selectedTab}
-                                    setSelectedTab={setSelectedTab}
-                                />
-                            }
+                    <Route
+                    path="/*"
+                    element={
+                        isAuthenticated ? (
+                        <AppRoutes
+                            selectedTab={selectedTab}
+                            setSelectedTab={setSelectedTab}
                         />
-                    ) : (
-                        <Route
-                            path="/*"
-                            element={
-                                <LoginPage
-                                    isLoading={isLoading}
-                                    handleLoginSuccess={login}
-                                    GOOGLE_CLIENT_ID={GOOGLE_CLIENT_ID}
-                                />
-                            }
+                        ) : (
+                        <LoginPage
+                            isLoading={isLoading}
+                            handleLoginSuccess={login}
+                            GOOGLE_CLIENT_ID={GOOGLE_CLIENT_ID}
                         />
-                    )}
+                        )
+                    }
+                    />
 
                     <Route path="*" element={<NotFoundPage />} />
                 </Routes>

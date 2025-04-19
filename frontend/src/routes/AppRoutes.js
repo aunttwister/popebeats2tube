@@ -8,7 +8,7 @@ import UploadManagement from '../components/UploadManagement/UploadManagement';
 import NotFoundPage from '../components/common/NotFoundPage';
 import './AppRoutes.css';
 
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../components/auth/AuthContext';
 
 const AppRoutes = ({ selectedTab, setSelectedTab }) => {
     const navigate = useNavigate();

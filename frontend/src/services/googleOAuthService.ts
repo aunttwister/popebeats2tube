@@ -33,6 +33,7 @@ export const googleOAuthService = {
 
   refreshToken: async (): Promise<void> => {
     const userId = getUserId();
+    console.log('entered refreshToken')
 
     const response = await apiClient.post<OAuthLoginResponse>('/google-oauth/token-refresh', {
       user_id: userId,

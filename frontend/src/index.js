@@ -7,7 +7,7 @@ import reportWebVitals from './reportWebVitals';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from './theme'; // your custom MUI theme
 
-import { AuthProvider } from './context/AuthContext'; // adjust the path
+import { AuthProvider } from './components/auth/AuthContext'; // adjust the path
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

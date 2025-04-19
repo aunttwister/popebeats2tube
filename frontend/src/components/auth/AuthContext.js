@@ -5,10 +5,10 @@ import {
     setLocalStorage,
     clearStorage,
     getUser,
-} from '../utils/tokenManager';
-import { googleOAuthService } from '../services/googleOAuthService.ts';
-import { toastHelper } from '../utils/toastHelper';
-import { redirectToOAuth } from '../utils/redirectHelper.js';
+} from '../../utils/tokenManager.js';
+import { googleOAuthService } from '../../services/googleOAuthService.ts';
+import { toastHelper } from '../../utils/toastHelper.js';
+import { redirectToOAuth } from '../../utils/redirectHelper.js';
 
 const AuthContext = createContext();
 
